@@ -1,6 +1,3 @@
-import re
-from unittest import case
-from numpy import average
 import requests
 import os
 import telebot
