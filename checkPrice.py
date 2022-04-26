@@ -1,7 +1,6 @@
 import requests
 import os
 import telebot
-import time
 from dotenv import load_dotenv
 from prettytable import PrettyTable
 
