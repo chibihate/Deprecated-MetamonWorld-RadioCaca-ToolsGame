@@ -3,6 +3,7 @@ import os
 import telebot
 from dotenv import load_dotenv
 from prettytable import PrettyTable
+import time
 
 load_dotenv()
 
@@ -66,6 +67,23 @@ def getLowestPrice(headers, type):
             "address": ADDRESS_WALLET,
             "type": types[type],
             "orderType": orderType["LowestPrice"],
+            "orderId": "-1",
+            "pageSize": "1",
+        },
+    )
+    json = response.json()
+    return json.get("data").get("orderAmount")
+
+
+def getLowestTotalPrice(headers, type):
+    response = requests.request(
+        "POST",
+        SELL_LIST_URL,
+        headers=headers,
+        data={
+            "address": ADDRESS_WALLET,
+            "type": types[type],
+            "orderType": orderType["LowestTotalPrice"],
             "orderId": "-1",
             "pageSize": "1",
         },
@@ -266,15 +284,50 @@ def getPriceMarketInGame():
         # time.sleep(10)
 
 
+def checkDataOfficialSale():
+    headers = {
+        "accessToken": getAccessToken(),
+    }
+    url = "https://metamon-api.radiocaca.com/usm-api/official-sale/list?"
+    url = url + f"address={ADDRESS_WALLET}&pageSize=50&orderId=-1"
+    response = requests.request(
+        "GET",
+        url,
+        headers=headers,
+        data={
+            "address": ADDRESS_WALLET,
+            "orderId": "-1",
+            "pageSize": "50",
+        },
+    )
+    json = response.json()
+    list = json.get("data").get("list")
+    tableItems = PrettyTable()
+    tableItems.field_names = ["Id", "Symbol", "Remain", "Total"]
+    tableItems.align["Id"] = "r"
+    tableItems.align["Symbol"] = "l"
+    tableItems.align["Remain"] = "r"
+    tableItems.align["Total"] = "r"
+    for item in list:
+        id = item["id"]
+        symbol = item["symbol"]
+        leftNum = item["leftNum"]
+        totalNum = item["totalNum"]
+        tableItems.add_row([id, symbol, leftNum, totalNum])
+    print(tableItems)
+
+
 if __name__ == "__main__":
     helloContent = """
     1. Check price in the market
     2. Check earn raca in game
     3. Check earn raca official sale
     4. Check group score
+    5. Check data official sale
     0. Exit
     Please select you want to choose
     """
+
     caseNumber = int(input(helloContent))
     if caseNumber == 1:
         getPriceMarketInGame()
@@ -283,4 +336,8 @@ if __name__ == "__main__":
     if caseNumber == 3:
         print(getEarnRacaOfficialSale())
     if caseNumber == 4:
-        print(getScoreGroupInKingdom())
+        while 1 != 0:
+            print(getScoreGroupInKingdom())
+            time.sleep(10)
+    if caseNumber == 5:
+        checkDataOfficialSale()
