@@ -74,18 +74,21 @@ class AccessGame:
         url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/verifyLoginCode"
         response = requests.request("POST", url, headers=headers, data=payload)
         json = response.json()
-        if json.get("code") != "SUCCESS":
-            print("Can't verify login code")
-            exit()
-        else:
-            print("Email is verified")
+        return json.get("code")
 
     def initAccessToken(self):
         self.getAccessToken()
         self.changeAccessTokenInSetting()
         self.getLoginCode()
-        print("Please fill your code:")
-        self.verifyLoginCode(loginCode=input())
+        while 1 != 0:
+            print("Please fill your code:")
+            code = self.verifyLoginCode(loginCode=input())
+            if code != "SUCCESS":
+                print("Login code is not correct")
+                continue
+            else:
+                print("Email is verified")
+                return
 
 
 def playGame():
@@ -96,7 +99,8 @@ def playGame():
     helloContent = """
     1. Battle in Island
     2. Mint eggs
-    3. Up attribute all monsters    
+    3. Up attribute all monsters   
+    4. Join the best squad in Last world
     0. Exit
     Please select you want to choose
     """
@@ -108,6 +112,8 @@ def playGame():
             mtm.mintEgg()
         if caseNumber == 3:
             mtm.addAttrAllMetamon()
+        if caseNumber == 4:
+            mtm.joinTheBestSquad()
         if caseNumber == 0:
             return
 

@@ -1,4 +1,6 @@
 import requests
+from prettytable import PrettyTable
+import time
 
 attrType = {
     "1": "luck",
@@ -180,3 +182,74 @@ class MetamonPlayer:
             return
 
         print(f"Minted eggs are success")
+
+    def getScoreGroupInKingdom(self, _scoreAverage, _monsterNum):
+        scoreAverage = 0
+        monsterNum = 0
+        idSquad = 0
+        idSquadOfTheBest = 0
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {
+            "address": self.address,
+            "teamId": -1,
+            "pageSize": 100,
+        }
+        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/teamList"
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            data=payload,
+        )
+        json = response.json()
+        squadList = json.get("data").get("list")
+        table = PrettyTable()
+        table.field_names = [
+            "Score average",
+            "Monster number",
+            "ID group",
+            "Group name",
+        ]
+        table.align["Score average"] = "r"
+        table.align["Monster number"] = "r"
+        table.align["ID"] = "r"
+        table.align["Group"] = "l"
+
+        for squad in squadList:
+            if int(squad["monsterNum"]) >= 100:
+                scoreAverageTemp = round(
+                    int(squad["totalSca"]) / int(squad["monsterNum"])
+                )
+                if scoreAverage < scoreAverageTemp:
+                    scoreAverage = scoreAverageTemp
+                    monsterNum = int(squad["monsterNum"])
+                    idSquad = int(squad["id"])
+                table.add_row(
+                    [
+                        scoreAverageTemp,
+                        squad["monsterNum"],
+                        squad["name"],
+                        squad["id"],
+                    ]
+                )
+        print(table)
+        if scoreAverage > _scoreAverage and monsterNum > _monsterNum:
+            idSquadOfTheBest = idSquad
+            print(
+                f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
+            )
+        return idSquadOfTheBest
+
+    def joinTheBestSquad(self):
+        scoreAverage = int(input("Please enter your score average:\n"))
+        monsterNum = int(input("Please enter your monster number:\n"))
+        while 1 != 0:
+            idSquadOfTheBest = self.getScoreGroupInKingdom(scoreAverage, monsterNum)
+            if idSquadOfTheBest == 0:
+                time.sleep(3)
+                continue
+            else:
+                print(idSquadOfTheBest)
+                return
