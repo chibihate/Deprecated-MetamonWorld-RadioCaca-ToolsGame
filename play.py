@@ -1,13 +1,4 @@
 import requests
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-ADDRESS_WALLET = os.getenv("ADDRESS_WALLET")
-SIGN_WALLET = os.getenv("SIGN_WALLET")
-MSG_WALLET = os.getenv("MSG_WALLET")
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 attrType = {
     "1": "luck",
@@ -16,57 +7,6 @@ attrType = {
     "4": "size",
     "5": "stealth",
 }
-
-
-class AccessGame:
-    def __init__(self, address, sign, msg):
-        self.accessToken = None
-        self.address = address
-        self.sign = sign
-        self.msg = msg
-        self.initAccessToken()
-
-    def getAccessToken(self):
-        """Obtain token for game session to perform battles and other actions"""
-        payload = {
-            "address": self.address,
-            "sign": self.sign,
-            "msg": self.msg,
-            "network": "1",
-            "clientType": "MetaMask",
-        }
-        url = "https://metamon-api.radiocaca.com/usm-api/login"
-        response = requests.request("POST", url, data=payload)
-        json = response.json()
-        self.accessToken = json.get("data").get("accessToken")
-        print("Access token: " + self.accessToken)
-
-    def getLoginCode(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/sendLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
-        print("Code is sending to your email. Kindly check")
-
-    def verifyLoginCode(self, loginCode):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address, "code": loginCode}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/verifyLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
-
-    def initAccessToken(self):
-        self.getAccessToken()
-        self.getLoginCode()
-        print("Please fill your code:")
-        self.verifyLoginCode(loginCode=input())
 
 
 class MetamonPlayer:
@@ -86,7 +26,6 @@ class MetamonPlayer:
         url = "https://metamon-api.radiocaca.com/usm-api/getWalletPropertyList"
         response = requests.request("POST", url, headers=headers, data=payload)
         json = response.json()
-        # print(json)
         return json.get("data").get("metamonList")
 
     def getMetamonAtIslandList(self):
@@ -172,13 +111,10 @@ class MetamonPlayer:
         numberBattleField = 0
         if 21 <= int(metamonLevel) <= 40:
             numberBattleField = 2
-            # print("numberBattleField is " + str(numberBattleField))
         elif 41 <= int(metamonLevel) <= 60:
             numberBattleField = 3
-            # print("numberBattleField is " + str(numberBattleField))
         else:
             numberBattleField = 1
-            # print("numberBattleField is " + str(numberBattleField))
         for i in range(int(numberBattleField)):
             minScareBattleObjects.append(self.getMinScareBattleObject(metamonId, i + 1))
         for battleObject in minScareBattleObjects:
@@ -230,33 +166,17 @@ class MetamonPlayer:
             rateWin = self.battleWin / (self.battleLose + self.battleWin) * 100
         print(f"Rate: {round(rateWin)}%")
 
+    def mintEgg(self):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address}
+        url = "https://metamon-api.radiocaca.com/usm-api/composeMonsterEgg"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        code = json.get("code")
+        if code != "SUCCESS":
+            print("Mint eggs failed!")
+            return
 
-if __name__ == "__main__":
-    accessTokenGame = ""
-
-    helloContent = """
-    1. Get access token game
-    2. Get metamon player
-    3. Up attribute all monsters
-    4. Battle in Island
-    0. Exit
-    Please select you want to choose
-    """
-    while 1 != 0:
-        caseNumber = int(input(helloContent))
-        if caseNumber == 1:
-            getAccessTokenGame = AccessGame(
-                address=ADDRESS_WALLET, sign=SIGN_WALLET, msg=MSG_WALLET
-            )
-            accessTokenGame = getAccessTokenGame.accessToken
-        if caseNumber == 2:
-            if accessTokenGame == "":
-                mtm = MetamonPlayer(address=ADDRESS_WALLET, accessToken=ACCESS_TOKEN)
-            else:
-                mtm = MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessTokenGame)
-        if caseNumber == 3:
-            mtm.addAttrAllMetamon()
-        if caseNumber == 4:
-            mtm.startBattleIsland()
-        if caseNumber == 0:
-            exit()
+        print(f"Minted eggs are success")

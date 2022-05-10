@@ -1,14 +1,5 @@
 import requests
-import os
 from prettytable import PrettyTable
-from dotenv import load_dotenv
-
-load_dotenv()
-
-ADDRESS_WALLET = os.getenv("ADDRESS_WALLET")
-SIGN_WALLET = os.getenv("SIGN_WALLET")
-MSG_WALLET = os.getenv("MSG_WALLET")
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 typeItems = {
     1: "Metamon Fragments",
@@ -76,58 +67,6 @@ def getOrderType():
             continue
         else:
             return number
-
-
-class AccessGame:
-    def __init__(self, address, sign, msg):
-        self.accessToken = None
-        self.address = address
-        self.sign = sign
-        self.msg = msg
-        self.initAccessToken()
-
-    def getAccessToken(self):
-        """Obtain token for game session to perform battles and other actions"""
-        payload = {
-            "address": self.address,
-            "sign": self.sign,
-            "msg": self.msg,
-            "network": "1",
-            "clientType": "MetaMask",
-        }
-        url = "https://metamon-api.radiocaca.com/usm-api/login"
-        response = requests.request("POST", url, data=payload)
-        json = response.json()
-        self.accessToken = json.get("data").get("accessToken")
-        print("Access token: " + self.accessToken)
-
-    def getLoginCode(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/sendLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        if json.get("code") == "SUCCESS":
-            print("Code is sending to your email. Kindly check")
-
-    def verifyLoginCode(self, loginCode):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address, "code": loginCode}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/verifyLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        if json.get("code") == "SUCCESS":
-            print("Email is verified")
-
-    def initAccessToken(self):
-        self.getAccessToken()
-        self.getLoginCode()
-        print("Please fill your code:")
-        self.verifyLoginCode(loginCode=input())
 
 
 class MetamonPlayer:
@@ -326,46 +265,3 @@ class MetamonPlayer:
                 continue
             else:
                 return
-
-
-if __name__ == "__main__":
-    accessTokenGame = ""
-
-    helloContent = """
-    1. Get access token game
-    2. Get metamon player
-    3. Check bag
-    4. Check price in the market
-    5. Shopping
-    6. Shelling unit item
-    7. Canceling
-    0. Exit
-    Please select you want to choose
-    """
-    while 1 != 0:
-        caseNumber = int(input(helloContent))
-        if caseNumber == 1:
-            getAccessTokenGame = AccessGame(
-                address=ADDRESS_WALLET, sign=SIGN_WALLET, msg=MSG_WALLET
-            )
-            accessTokenGame = getAccessTokenGame.accessToken
-        if caseNumber == 2:
-            if accessTokenGame == "":
-                mtm = MetamonPlayer(address=ADDRESS_WALLET, accessToken=ACCESS_TOKEN)
-            else:
-                mtm = MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessTokenGame)
-        if caseNumber == 3:
-            mtm.checkBag()
-        if caseNumber == 4:
-            typeItem = getTypeItem()
-            orderType = getOrderType()
-            while 1 != 0:
-                mtm.getPriceInMarket(typeItem, orderType)
-        if caseNumber == 5:
-            mtm.shopping()
-        if caseNumber == 6:
-            mtm.shellingUnitItem()
-        if caseNumber == 7:
-            mtm.canceling()
-        if caseNumber == 0:
-            exit()
