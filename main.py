@@ -99,8 +99,9 @@ def playGame():
     helloContent = """
     1. Battle in Island
     2. Mint eggs
-    3. Up attribute all monsters   
-    4. Join the best squad in Last world
+    3. Show all metamons
+    4. Up attribute all monsters   
+    5. Join the best squad in Last world
     0. Exit
     Please select you want to choose
     """
@@ -111,8 +112,10 @@ def playGame():
         if caseNumber == 2:
             mtm.mintEgg()
         if caseNumber == 3:
-            mtm.addAttrAllMetamon()
+            mtm.showAllMetamons()
         if caseNumber == 4:
+            mtm.addAttrAllMetamon()
+        if caseNumber == 5:
             mtm.joinTheBestSquad()
         if caseNumber == 0:
             return

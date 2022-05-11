@@ -30,6 +30,59 @@ class MetamonPlayer:
         json = response.json()
         return json.get("data").get("metamonList")
 
+    def showAllMetamons(self):
+        metamonList = self.getMetamonList()
+        position = ""
+        table = PrettyTable()
+        table.field_names = [
+            "ID",
+            "Rare",
+            "Level",
+            "Exp",
+            "Luck",
+            "Courage",
+            "Wisdom",
+            "Size",
+            "Stealth",
+            "HI",
+            "Position",
+            "Race",
+        ]
+        table.align["ID"] = "r"
+        table.align["Rare"] = "r"
+        table.align["Level"] = "r"
+        table.align["Exp"] = "r"
+        table.align["Luck"] = "r"
+        table.align["Courage"] = "r"
+        table.align["Wisdom"] = "r"
+        table.align["Size"] = "r"
+        table.align["Stealth"] = "r"
+        table.align["HI"] = "r"
+        table.align["Position"] = "l"
+        table.align["Race"] = "l"
+        for metamon in metamonList:
+            if int(metamon["position"]) == 1:
+                position = "Island"
+            else:
+                position = "Last world"
+            table.add_row(
+                [
+                    metamon["tokenId"],
+                    metamon["rarity"],
+                    metamon["level"],
+                    metamon["exp"],
+                    metamon["luk"],
+                    metamon["crg"],
+                    metamon["inte"],
+                    metamon["con"],
+                    metamon["inv"],
+                    metamon["healthy"],
+                    position,
+                    metamon["race"],
+                ]
+            )
+        print(table)
+
     def getMetamonAtIslandList(self):
         metamonList = self.getMetamonList()
         metamonAtIslandList = []
