@@ -67,6 +67,16 @@ class MetamonPlayer:
         upperNum = json.get("data").get("upperNum")
         print(f"{metamonId} up {attrType[type]} is {upperNum}")
 
+    def resetMonster(self, metamonId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "nftId": metamonId}
+        url = "https://metamon-api.radiocaca.com/usm-api/resetMonster"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        print(json)
+
     def addAttrAllMetamon(self):
         helloContent = """
         1. Luck
@@ -157,6 +167,8 @@ class MetamonPlayer:
                 levelBattleObject,
             ) = self.getMinScareBattleObjectAllLevel(metamon["id"], metamon["level"])
             for i in range(metamon["tear"]):
+                if int(metamon["level"]) == 60 and int(metamon["exp"]) == 395:
+                    self.resetMonster(metamon["id"])
                 self.battleIsland(
                     metamon["id"], minScareBattleObjectAllLevel, levelBattleObject
                 )
@@ -222,7 +234,10 @@ class MetamonPlayer:
                 scoreAverageTemp = round(
                     int(squad["totalSca"]) / int(squad["monsterNum"])
                 )
-                if scoreAverage < scoreAverageTemp:
+                if (
+                    scoreAverage < scoreAverageTemp
+                    and int(squad["monsterNum"]) > _monsterNum
+                ):
                     scoreAverage = scoreAverageTemp
                     monsterNum = int(squad["monsterNum"])
                     idSquad = int(squad["id"])
@@ -235,12 +250,27 @@ class MetamonPlayer:
                     ]
                 )
         print(table)
-        if scoreAverage > _scoreAverage and monsterNum > _monsterNum:
+        if scoreAverage > _scoreAverage:
             idSquadOfTheBest = idSquad
             print(
                 f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
             )
         return idSquadOfTheBest
+
+    def teamJoin(self, teamId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "teamId": teamId}
+        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/teamJoin"
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            data=payload,
+        )
+        json = response.json()
+        print(json)
 
     def joinTheBestSquad(self):
         scoreAverage = int(input("Please enter your score average:\n"))
@@ -251,5 +281,5 @@ class MetamonPlayer:
                 time.sleep(3)
                 continue
             else:
-                print(idSquadOfTheBest)
+                self.teamJoin(idSquadOfTheBest)
                 return
