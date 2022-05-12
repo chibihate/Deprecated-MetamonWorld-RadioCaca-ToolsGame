@@ -19,7 +19,7 @@ class MetamonPlayer:
         self.battleWin = 0
         self.battleLose = 0
 
-    def getMetamonList(self):
+    def getMetamonsAtIsland(self):
         headers = {
             "accessToken": self.accessToken,
         }
@@ -30,8 +30,20 @@ class MetamonPlayer:
         json = response.json()
         return json.get("data").get("metamonList")
 
+    def getMetamonsAtLastWorld(self):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "orderType": "2", "position": 2}
+
+        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/monsterList"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        return json.get("data")
+
     def showAllMetamons(self):
-        metamonList = self.getMetamonList()
+        metamonsAtIsland = self.getMetamonsAtIsland()
+        metamonsAtLastWorld = self.getMetamonsAtLastWorld()
         position = ""
         table = PrettyTable()
         table.field_names = [
@@ -60,11 +72,7 @@ class MetamonPlayer:
         table.align["HI"] = "r"
         table.align["Position"] = "l"
         table.align["Race"] = "l"
-        for metamon in metamonList:
-            if int(metamon["position"]) == 1:
-                position = "Island"
-            else:
-                position = "Last world"
+        for metamon in metamonsAtLastWorld:
             table.add_row(
                 [
                     metamon["tokenId"],
@@ -77,19 +85,28 @@ class MetamonPlayer:
                     metamon["con"],
                     metamon["inv"],
                     metamon["healthy"],
-                    position,
+                    "Last world",
+                    metamon["race"],
+                ]
+            )
+        for metamon in metamonsAtIsland:
+            table.add_row(
+                [
+                    metamon["tokenId"],
+                    metamon["rarity"],
+                    metamon["level"],
+                    metamon["exp"],
+                    metamon["luk"],
+                    metamon["crg"],
+                    metamon["inte"],
+                    metamon["con"],
+                    metamon["inv"],
+                    metamon["healthy"],
+                    "Island",
                     metamon["race"],
                 ]
             )
         print(table)
-
-    def getMetamonAtIslandList(self):
-        metamonList = self.getMetamonList()
-        metamonAtIslandList = []
-        for metamon in metamonList:
-            if metamon["position"] == 1:
-                metamonAtIslandList.append(metamon)
-        return metamonAtIslandList
 
     def addAttrNeedAsset(self, metamonId, type):
         headers = {
@@ -139,9 +156,13 @@ class MetamonPlayer:
         5. Stealth
         Please choose attr to add all metamons
         """
-        metamonList = self.getMetamonList()
+        metamonsAtIsland = self.getMetamonsAtIsland()
+        metamonsAtLastWorld = self.getMetamonsAtLastWorld()
         caseNumber = input(helloContent)
-        for metamon in metamonList:
+        for metamon in metamonsAtIsland:
+            if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
+                self.addAttr(metamon["id"], caseNumber)
+        for metamon in metamonsAtLastWorld:
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
 
@@ -213,7 +234,7 @@ class MetamonPlayer:
             print(f"{myMonId} is lose")
 
     def startBattleIsland(self):
-        metamonAtIslandList = self.getMetamonAtIslandList()
+        metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
             (
                 minScareBattleObjectAllLevel,
@@ -248,7 +269,7 @@ class MetamonPlayer:
 
         print(f"Minted eggs are success")
 
-    def getScoreGroupInKingdom(self, _scoreAverage, _monsterNum):
+    def getScoreGroupInKingdom(self, _scoreAverage, _monsterNum, _monsterNumRarity):
         scoreAverage = 0
         idSquad = 0
         idSquadOfTheBest = 0
@@ -288,7 +309,7 @@ class MetamonPlayer:
                 if (
                     int(squad["monsterNum"]) > _monsterNum
                     and scoreAverage < int(squad["averageSca"])
-                    or int(squad["monsterNumRarity"]) > 100
+                    or int(squad["monsterNumRarity"]) > _monsterNumRarity
                 ):
                     scoreAverage = int(squad["averageSca"])
                     idSquad = int(squad["id"])
@@ -302,7 +323,10 @@ class MetamonPlayer:
                     ]
                 )
         print(table)
-        if scoreAverage > _scoreAverage or int(squad["monsterNumRarity"]) > 100:
+        if (
+            scoreAverage > _scoreAverage
+            or int(squad["monsterNumRarity"]) > _monsterNumRarity
+        ):
             idSquadOfTheBest = idSquad
             print(
                 f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
@@ -327,8 +351,11 @@ class MetamonPlayer:
     def joinTheBestSquad(self):
         scoreAverage = int(input("Please enter your score average:\n"))
         monsterNum = int(input("Please enter your monster number:\n"))
+        monsterNumRarity = int(input("Please enter your Rare monster number:\n"))
         while 1 != 0:
-            idSquadOfTheBest = self.getScoreGroupInKingdom(scoreAverage, monsterNum)
+            idSquadOfTheBest = self.getScoreGroupInKingdom(
+                scoreAverage, monsterNum, monsterNumRarity
+            )
             if idSquadOfTheBest == 0:
                 time.sleep(5)
                 continue
