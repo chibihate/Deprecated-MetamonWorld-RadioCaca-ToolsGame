@@ -250,7 +250,6 @@ class MetamonPlayer:
 
     def getScoreGroupInKingdom(self, _scoreAverage, _monsterNum):
         scoreAverage = 0
-        monsterNum = 0
         idSquad = 0
         idSquadOfTheBest = 0
         headers = {
@@ -284,26 +283,23 @@ class MetamonPlayer:
 
         for squad in squadList:
             if int(squad["monsterNum"]) >= 100:
-                scoreAverageTemp = round(
-                    int(squad["totalSca"]) / int(squad["monsterNum"])
-                )
                 if (
-                    scoreAverage < scoreAverageTemp
-                    and int(squad["monsterNum"]) > _monsterNum
+                    int(squad["monsterNum"]) > _monsterNum
+                    and scoreAverage < int(squad["averageSca"])
+                    or squad["monsterNumRarity"] > 250
                 ):
-                    scoreAverage = scoreAverageTemp
-                    monsterNum = int(squad["monsterNum"])
+                    scoreAverage = int(squad["averageSca"])
                     idSquad = int(squad["id"])
                 table.add_row(
                     [
-                        scoreAverageTemp,
+                        squad["averageSca"],
                         squad["monsterNum"],
                         squad["name"],
                         squad["id"],
                     ]
                 )
         print(table)
-        if scoreAverage > _scoreAverage:
+        if scoreAverage > _scoreAverage or squad["monsterNumRarity"] > 250:
             idSquadOfTheBest = idSquad
             print(
                 f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
@@ -331,7 +327,7 @@ class MetamonPlayer:
         while 1 != 0:
             idSquadOfTheBest = self.getScoreGroupInKingdom(scoreAverage, monsterNum)
             if idSquadOfTheBest == 0:
-                time.sleep(3)
+                time.sleep(5)
                 continue
             else:
                 self.teamJoin(idSquadOfTheBest)
