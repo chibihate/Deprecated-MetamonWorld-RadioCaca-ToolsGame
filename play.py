@@ -272,21 +272,23 @@ class MetamonPlayer:
         table = PrettyTable()
         table.field_names = [
             "Score average",
-            "Monster number",
-            "ID group",
+            "All monsters",
+            "R Monsters",
             "Group name",
+            "ID group",
         ]
         table.align["Score average"] = "r"
-        table.align["Monster number"] = "r"
-        table.align["ID"] = "r"
+        table.align["All monsters"] = "r"
+        table.align["R Monsters"] = "r"
         table.align["Group"] = "l"
+        table.align["ID"] = "r"
 
         for squad in squadList:
             if int(squad["monsterNum"]) >= 100:
                 if (
                     int(squad["monsterNum"]) > _monsterNum
                     and scoreAverage < int(squad["averageSca"])
-                    or int(squad["monsterNumRarity"]) > 250
+                    or int(squad["monsterNumRarity"]) > 100
                 ):
                     scoreAverage = int(squad["averageSca"])
                     idSquad = int(squad["id"])
@@ -294,12 +296,13 @@ class MetamonPlayer:
                     [
                         squad["averageSca"],
                         squad["monsterNum"],
+                        squad["monsterNumRarity"],
                         squad["name"],
                         squad["id"],
                     ]
                 )
         print(table)
-        if scoreAverage > _scoreAverage or int(squad["monsterNumRarity"]) > 250:
+        if scoreAverage > _scoreAverage or int(squad["monsterNumRarity"]) > 100:
             idSquadOfTheBest = idSquad
             print(
                 f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
