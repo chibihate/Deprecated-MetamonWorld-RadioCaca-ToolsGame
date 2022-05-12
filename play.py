@@ -286,7 +286,7 @@ class MetamonPlayer:
                 if (
                     int(squad["monsterNum"]) > _monsterNum
                     and scoreAverage < int(squad["averageSca"])
-                    or squad["monsterNumRarity"] > 250
+                    or int(squad["monsterNumRarity"]) > 250
                 ):
                     scoreAverage = int(squad["averageSca"])
                     idSquad = int(squad["id"])
@@ -299,7 +299,7 @@ class MetamonPlayer:
                     ]
                 )
         print(table)
-        if scoreAverage > _scoreAverage or squad["monsterNumRarity"] > 250:
+        if scoreAverage > _scoreAverage or int(squad["monsterNumRarity"]) > 250:
             idSquadOfTheBest = idSquad
             print(
                 f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
