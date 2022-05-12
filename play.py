@@ -364,3 +364,77 @@ class MetamonPlayer:
             else:
                 self.teamJoin(idSquadOfTheBest)
                 return
+
+    def battleRecord(self):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "pageSize": 15, "battleId": -1}
+        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/battleRecord"
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            data=payload,
+        )
+        json = response.json()
+        battleRecordDetails = json.get("data").get("battleRecordDetails")
+        table = PrettyTable()
+        table.field_names = ["Date", "Monsters", "Valhalla", "Status"]
+        table.align["Monsters"] = "r"
+        table.align["Valhalla"] = "r"
+        table.align["Status"] = "l"
+        for battle in battleRecordDetails:
+            statusRecord = ""
+            if int(battle["winStatus"]) == 1:
+                statusRecord = "Win"
+            else:
+                statusRecord = "Lose"
+            table.add_row(
+                [
+                    battle["startTime"],
+                    battle["monsterNum"],
+                    battle["myMerit"],
+                    statusRecord,
+                ]
+            )
+        print(table)
+
+    def getMyTeams(self):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address}
+        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/myTeams"
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            data=payload,
+        )
+        json = response.json()
+        battles = json.get("data")
+        table = PrettyTable()
+        table.field_names = [
+            "My monsters",
+            "My average",
+            "R monsters",
+            "Team average",
+            "Unlock date",
+        ]
+        table.align["My monsters"] = "r"
+        table.align["My average"] = "r"
+        table.align["R monsters"] = "r"
+        table.align["Team average"] = "r"
+        for battle in battles:
+            myAverage = int(battle["mytotalSca"]) / int(battle["myMonsterNum"])
+            table.add_row(
+                [
+                    battle["myMonsterNum"],
+                    myAverage,
+                    battle["monsterNumRarity"],
+                    battle["averageSca"],
+                    battle["unlockDate"],
+                ]
+            )
+        print(table)

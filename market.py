@@ -265,3 +265,35 @@ class MetamonPlayer:
                 continue
             else:
                 return
+
+    def buyItemInDrops(self, orderId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address}
+
+        url = f"https://metamon-api.radiocaca.com/usm-api/official-sale/buy?orderId={orderId}"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        print(json)
+
+    def buyDrops(self):
+        helloContent = """
+        Official sale 
+        1. Purple Potion         - 111
+        2. Anti-Fatigue Potion   - 106
+        0. Exit
+        Please select you want to buy it
+        """
+        caseNumber = int(input(helloContent))
+        numberToBuy = int(input("How much do you want to buy?\n"))
+        if caseNumber == 1:
+            for i in range(numberToBuy):
+                self.buyItemInDrops(111)
+            return
+        if caseNumber == 2:
+            for i in range(numberToBuy):
+                self.buyItemInDrops(106)
+            return
+        if caseNumber == 0:
+            return

@@ -101,7 +101,9 @@ def playGame():
     2. Mint eggs
     3. Show all metamons
     4. Up attribute all monsters   
-    5. Join the best squad in Last world
+    5. Join the best squad in Lost world
+    6. Battle record in Lost world
+    7. Get status my teams in Lost world
     0. Exit
     Please select you want to choose
     """
@@ -117,6 +119,10 @@ def playGame():
             mtm.addAttrAllMetamon()
         if caseNumber == 5:
             mtm.joinTheBestSquad()
+        if caseNumber == 6:
+            mtm.battleRecord()
+        if caseNumber == 7:
+            mtm.getMyTeams()
         if caseNumber == 0:
             return
 
@@ -132,6 +138,7 @@ def marketGame():
     3. Shopping
     4. Shelling unit item
     5. Canceling
+    6. Buy item in drops
     0. Exit
     Please select you want to choose
     """
@@ -150,6 +157,8 @@ def marketGame():
             mtm.shellingUnitItem()
         if caseNumber == 5:
             mtm.canceling()
+        if caseNumber == 6:
+            mtm.buyDrops()
         if caseNumber == 0:
             return
 
