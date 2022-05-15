@@ -181,15 +181,14 @@ class MetamonPlayer:
 
     def shoppingWithSetPrice(self):
         typeItem = getTypeItem()
-        orderType = 2
+        orderType = getOrderType()
         self.getPriceInMarket(typeItem, orderType)
         item = self.getShopOrderList(typeItem, orderType, 1)
-        price = int(item[0]["amount"])
-        priceOfHalf = int(price / 2)
-        print(f"The lowest price of item is {price}")
+        lowestPrice = int(item[0]["amount"])
+        print(f"The lowest price of item is {lowestPrice}")
         shoppingContent = """
-        1. Half of price
-        2. Set price you want
+        1. The lowest price
+        2. Set price
         0. Exit
         Please select you want to choose
         """
@@ -203,14 +202,14 @@ class MetamonPlayer:
             price = int(item[0]["amount"])
             orderId = item[0]["id"]
             if caseNumber == 1:
-                if price <= priceOfHalf:
+                if price <= lowestPrice:
                     self.buyItem(orderId)
                     print("Buy successfully")
             if caseNumber == 2:
                 if price <= priceExpect:
                     self.buyItem(orderId)
                     print("Buy successfully")
-            time.sleep(5)
+            time.sleep(1)
 
     def shellingUnitItem(self):
         typeItem = getTypeItem()
