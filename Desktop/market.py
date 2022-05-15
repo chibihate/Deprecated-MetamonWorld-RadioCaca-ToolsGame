@@ -1,5 +1,6 @@
 import requests
 from prettytable import PrettyTable
+import time
 
 typeItems = {
     1: "Metamon Fragments",
@@ -109,7 +110,6 @@ class MetamonPlayer:
             "pageSize": pageSize,
         }
         url = "https://metamon-api.radiocaca.com/usm-api/shop-order/sellList"
-        print(f"Price of {typeItems[typeItem]} with {orderTypes[orderType]}")
         response = requests.request("POST", url, headers=headers, data=payload)
         json = response.json()
         return json.get("data").get("shopOrderList")
@@ -178,6 +178,39 @@ class MetamonPlayer:
                 continue
             else:
                 return
+
+    def shoppingWithSetPrice(self):
+        typeItem = getTypeItem()
+        orderType = 2
+        self.getPriceInMarket(typeItem, orderType)
+        item = self.getShopOrderList(typeItem, orderType, 1)
+        price = int(item[0]["amount"])
+        priceOfHalf = int(price / 2)
+        print(f"The lowest price of item is {price}")
+        shoppingContent = """
+        1. Half of price
+        2. Set price you want
+        0. Exit
+        Please select you want to choose
+        """
+        caseNumber = int(input(shoppingContent))
+        if caseNumber == 2:
+            priceExpect = int(input("Please enter price you want:\n"))
+        if caseNumber == 0:
+            return
+        while 1 != 0:
+            item = self.getShopOrderList(typeItem, orderType, 1)
+            price = int(item[0]["amount"])
+            orderId = item[0]["id"]
+            if caseNumber == 1:
+                if price <= priceOfHalf:
+                    self.buyItem(orderId)
+                    print("Buy successfully")
+            if caseNumber == 2:
+                if price <= priceExpect:
+                    self.buyItem(orderId)
+                    print("Buy successfully")
+            time.sleep(5)
 
     def shellingUnitItem(self):
         typeItem = getTypeItem()

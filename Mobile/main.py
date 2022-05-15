@@ -117,6 +117,12 @@ def marketGame():
     0. Exit
     Please select you want to choose
     """
+    shoppingContent = """
+    1. Manual
+    2. Automatic
+    0. Exit
+    Please select you want to choose
+    """
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
@@ -127,7 +133,13 @@ def marketGame():
             while 1 != 0:
                 mtm.getPriceInMarket(typeItem, orderType)
         if caseNumber == 3:
-            mtm.shopping()
+            caseNumber = int(input(shoppingContent))
+            if caseNumber == 1:
+                mtm.shopping()
+            if caseNumber == 2:
+                mtm.shoppingWithSetPrice()
+            if caseNumber == 0:
+                continue
         if caseNumber == 4:
             mtm.shellingUnitItem()
         if caseNumber == 5:
