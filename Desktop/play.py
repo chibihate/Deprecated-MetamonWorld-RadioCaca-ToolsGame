@@ -147,7 +147,49 @@ class MetamonPlayer:
         url = "https://metamon-api.radiocaca.com/usm-api/resetMonster"
         response = requests.request("POST", url, headers=headers, data=payload)
         json = response.json()
-        print(json)
+        code = json.get("code")
+        if code == "SUCCESS":
+            print("Reseted monster successfully")
+        else:
+            print("Can't reset monster")
+
+    def updateMonster(self, metamonId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "nftId": metamonId}
+        url = "https://metamon-api.radiocaca.com/usm-api/updateMonster"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        code = json.get("code")
+        if code == "SUCCESS":
+            print("Updated monster successfully")
+        else:
+            print("Can't update monster")
+
+    def addHealthy(self, metamonId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "nftId": metamonId}
+        url = "https://metamon-api.radiocaca.com/usm-api/addHealthy"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        code = json.get("code")
+        if code == "SUCCESS":
+            print("Add healthy monster successfully")
+        else:
+            print("Can't add healthy monster")
+
+    def addFatigueNeedAsset(self, metamonId):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {"address": self.address, "nftId": metamonId}
+        url = "https://metamon-api.radiocaca.com/usm-api/addFatigueNeedAsset"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        return json.get("code")
 
     def addAttrAllMetamon(self):
         helloContent = """
@@ -211,7 +253,7 @@ class MetamonPlayer:
                 scareScore = int(battleObject["sca"])
                 minScareBattleObjectAllLevel = battleObject["id"]
                 levelBattleObject = level
-
+        print(f"Battle object has scare score {scareScore}")
         return minScareBattleObjectAllLevel, levelBattleObject
 
     def battleIsland(self, myMonId, battleMonId, battleLevel):
@@ -230,24 +272,60 @@ class MetamonPlayer:
         self.fragmentNum += json.get("data").get("bpFragmentNum")
         if json.get("data").get("challengeExp") == 5:
             self.battleWin += 1
-            print(f"{myMonId} is win")
+            return True
         else:
             self.battleLose += 1
-            print(f"{myMonId} is lose")
+            return False
+
+    def checkAbility(self, id, level, exp, expMax, hi):
+        status = True
+        if level == 60 and exp == 395:
+            self.resetMonster(id)
+            exp = 0
+        if level == 59 and exp == 600:
+            self.updateMonster(id)
+            level = 60
+            exp = 0
+            status = False
+        if level != 59 and exp >= expMax:
+            self.updateMonster(id)
+            exp = 0
+            level += 1
+        if hi <= 90:
+            if self.addFatigueNeedAsset(id) == "SUCCESS":
+                self.addHealthy(id)
+                hi += 10
+            else:
+                print("Please check HI is available or not")
+        return status, level, exp
 
     def startBattleIsland(self):
         metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
+            tokenId = metamon["tokenId"]
+            id = metamon["id"]
+            level = int(metamon["level"])
+            exp = int(metamon["exp"])
+            expMax = int(metamon["expMax"])
+            hi = int(metamon["healthy"])
+            tear = int(metamon["tear"])
+            print(
+                f"Start {tokenId} with level:{level}, exp:{exp}, HI:{hi} and {tear} turns"
+            )
+            # Check ability of metamon before start battle
+            status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
+            # Get the mininum score scare object battle
             (
                 minScareBattleObjectAllLevel,
                 levelBattleObject,
-            ) = self.getMinScareBattleObjectAllLevel(metamon["id"], metamon["level"])
-            for i in range(metamon["tear"]):
-                if int(metamon["level"]) == 60 and int(metamon["exp"]) == 395:
-                    self.resetMonster(metamon["id"])
-                self.battleIsland(
-                    metamon["id"], minScareBattleObjectAllLevel, levelBattleObject
-                )
+            ) = self.getMinScareBattleObjectAllLevel(id, level)
+            for i in range(tear):
+                # Update ability of metamon
+                status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
+                if status == False:  # This case for metamon lv 59 -> 60
+                    break
+                self.battleIsland(id, minScareBattleObjectAllLevel, levelBattleObject)
+            print(f"End {tokenId}")
         print(f"Total egg fragments: {self.fragmentNum}")
         print(f"Total win battle: {self.battleWin}")
         print(f"Total lose battel: {self.battleLose}")
