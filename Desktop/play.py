@@ -324,7 +324,13 @@ class MetamonPlayer:
                 status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
                 if status == False:  # This case for metamon lv 59 -> 60
                     break
-                self.battleIsland(id, minScareBattleObjectAllLevel, levelBattleObject)
+                statusBattle = self.battleIsland(
+                    id, minScareBattleObjectAllLevel, levelBattleObject
+                )
+                if statusBattle == True:
+                    exp += 5
+                else:
+                    exp += 3
             print(f"End {tokenId}")
         print(f"Total egg fragments: {self.fragmentNum}")
         print(f"Total win battle: {self.battleWin}")
