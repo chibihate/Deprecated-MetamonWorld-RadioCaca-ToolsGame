@@ -20,6 +20,8 @@ typeItems = {
     13: "R stimulant",
     14: "SR stimulant",
     1004: "Donuts",
+    1007: "Spaceship",
+    1008: "Rocket",
     1015: "Villa fragments",
     1016: "Mansion fragments",
     1017: "Castle fragments",
