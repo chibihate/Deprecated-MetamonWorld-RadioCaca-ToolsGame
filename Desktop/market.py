@@ -3,6 +3,8 @@ from prettytable import PrettyTable
 import time
 
 typeItems = {
+    -1: "All",
+    0: "Metamon",
     1: "Metamon Fragments",
     2: "Potion",
     3: "Yellow diamond",
@@ -11,6 +13,7 @@ typeItems = {
     6: "Egg",
     7: "Space ticket",
     8: "Valhalla",
+    9: "N Battle Flag",
     10: "Purple potion",
     11: "Anti-fatigue potion",
     12: "N stimulant",
@@ -20,6 +23,9 @@ typeItems = {
     1015: "Villa fragments",
     1016: "Mansion fragments",
     1017: "Castle fragments",
+    1018: "Villa",
+    1019: "Mansion",
+    1020: "Castle",
 }
 
 orderTypes = {
@@ -29,41 +35,43 @@ orderTypes = {
     -3: "HighestTotalPrice",
 }
 
+dealTypes = {
+    -1: "All",
+    2: "Level up",
+    3: "Deposit",
+    4: "Withdraw",
+    6: "Mint",
+    7: "Open",
+    8: "Buy",
+    9: "Sell",
+    10: "Lock",
+    11: "Stake",
+    13: "+Exp",
+    14: "Enhance",
+    15: "+Space ticket",
+    16: "Travel",
+    17: "+Health",
+    19: "World Rewards",
+    20: "Reset",
+}
 
-def getTypeItem():
+
+def tableSelect(types, exceptNumber=[]):
     table = PrettyTable()
     table.field_names = ["Number", "Item"]
     table.align["Number"] = "r"
     table.align["Item"] = "l"
-    for item in typeItems:
-        table.add_row([item, typeItems[item]])
+    for numberID in types:
+        table.add_row([numberID, types[numberID]])
     print(str(table) + "\nPlease choose number:")
     while 1 != 0:
         number = int(input())
-        if number not in typeItems.keys():
+        if number not in types.keys():
             print("Number is out of range")
             print("Please choose number again:")
             continue
-        elif number == 1 or number == 5:
-            print(f"{typeItems[number]} is not available in market")
-            print("Please choose number again:")
-            continue
-        else:
-            return number
-
-
-def getOrderType():
-    table = PrettyTable()
-    table.field_names = ["Number", "Item"]
-    table.align["Number"] = "r"
-    table.align["Item"] = "l"
-    for type in orderTypes:
-        table.add_row([type, orderTypes[type]])
-    print(str(table) + "\nPlease choose number:")
-    while 1 != 0:
-        number = int(input())
-        if number not in orderTypes.keys():
-            print("Number is out of range")
+        elif number in exceptNumber:
+            print(f"{types[number]} is not available in market")
             print("Please choose number again:")
             continue
         else:
@@ -166,8 +174,9 @@ class MetamonPlayer:
         print(json)
 
     def shopping(self):
-        typeItem = getTypeItem()
-        orderType = getOrderType()
+        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
+        typeItem = tableSelect(typeItems, exceptNumber)
+        orderType = tableSelect(orderTypes)
         while 1 != 0:
             priceInMarket = self.getPriceInMarket(typeItem, orderType)
             caseNumber = int(input("Select 1-15 to buy - 0 to refresh\n"))
@@ -180,8 +189,9 @@ class MetamonPlayer:
                 return
 
     def shoppingWithSetPrice(self):
-        typeItem = getTypeItem()
-        orderType = getOrderType()
+        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
+        typeItem = tableSelect(typeItems, exceptNumber)
+        orderType = tableSelect(orderTypes)
         self.getPriceInMarket(typeItem, orderType)
         item = self.getShopOrderList(typeItem, orderType, 1)
         lowestPrice = int(item[0]["amount"])
@@ -211,22 +221,29 @@ class MetamonPlayer:
                     print("Buy successfully")
             time.sleep(1)
 
-    def shellingUnitItem(self):
-        typeItem = getTypeItem()
+    def shelling(self, type):
+        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
+        typeItem = tableSelect(typeItems, exceptNumber)
+        if type == 1:
+            orderType = 3
+            quantity = 1
+        else:
+            orderType = 2
+            quantity = int(input("Please enter your quantity: "))
         while 1 != 0:
-            self.getPriceInMarket(typeItem, 3)
-            shopOrderList = self.getShopOrderList(typeItem, 3, 1)
+            self.getPriceInMarket(typeItem, orderType)
+            shopOrderList = self.getShopOrderList(typeItem, orderType, 1)
             lowestPrice = int(shopOrderList[0]["amount"])
             print(f"The lowest price is {lowestPrice}")
             caseNumber = int(input("1. Shell lowest\n2. Set the price\n"))
             if caseNumber == 1:
                 lowestPrice -= 1
                 print(f"The lowest price will shell {lowestPrice}")
-                self.shellItem(typeItem, 1, lowestPrice)
+                self.shellItem(typeItem, quantity, lowestPrice)
                 continue
             elif caseNumber == 2:
                 price = int(input("Insert your price\n"))
-                self.shellItem(typeItem, 1, price)
+                self.shellItem(typeItem, quantity, price)
                 continue
             else:
                 return
@@ -329,3 +346,63 @@ class MetamonPlayer:
             return
         if caseNumber == 0:
             return
+
+    def getNftRecord(self, typeItem, dealType, bpNftId=-1, bpOtherId=-1, bpRacaId=-1):
+        headers = {
+            "accessToken": self.accessToken,
+        }
+        payload = {
+            "address": self.address,
+            "bpType": typeItem,
+            "bpNftId": bpNftId,
+            "orderId": -1,
+            "bpRacaId": bpRacaId,
+            "pageSize": 15,
+            "dealType": dealType,
+            "bpOtherId": bpOtherId,
+            "farmOrderId": -1,
+        }
+        url = "https://metamon-api.radiocaca.com/usm-api/getNftRecord"
+        response = requests.request("POST", url, headers=headers, data=payload)
+        json = response.json()
+        nftRecords = json.get("data").get("nftRecords")
+        bpNftId = json.get("data").get("bpNftId")
+        bpOtherId = json.get("data").get("bpOtherId")
+        bpRacaId = json.get("data").get("bpRacaId")
+        table = PrettyTable()
+        table.field_names = ["Type", "Deal", "Deal Num", "Detail", "Time"]
+        table.align["Type"] = "l"
+        table.align["Deal"] = "l"
+        table.align["Deal Num"] = "r"
+        for nftRecord in nftRecords:
+            table.add_row(
+                [
+                    typeItems[int(nftRecord["bpType"])],
+                    dealTypes[int(nftRecord["dealType"])],
+                    nftRecord["dealNum"],
+                    nftRecord["detail"],
+                    nftRecord["createTime"],
+                ]
+            )
+        print(table)
+        return bpNftId, bpOtherId, bpRacaId
+
+    def transactionHistory(self):
+        exceptNumber = [1]
+        typeItem = tableSelect(typeItems, exceptNumber)
+        dealType = tableSelect(dealTypes)
+        bpNftId, bpOtherId, bpRacaId = self.getNftRecord(typeItem, dealType)
+        helloContent = """
+        1. You want to see more
+        0. Exit
+        Please select you want to choose
+        """
+        while 1 != 0:
+            caseNumber = int(input(helloContent))
+            if caseNumber == 1:
+                bpNftId, bpOtherId, bpRacaId = self.getNftRecord(
+                    typeItem, dealType, bpNftId, bpOtherId, bpRacaId
+                )
+                continue
+            if caseNumber == 0:
+                return

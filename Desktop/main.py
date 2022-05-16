@@ -134,11 +134,11 @@ def marketGame():
         mtm = market.MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessTokenGame)
     helloContent = """
     1. Check bag
-    2. Check price in the market
-    3. Shopping
-    4. Shelling unit item
-    5. Canceling
-    6. Buy item in drops
+    2. Shopping
+    3. Shelling
+    4. Canceling
+    5. Buy item in drops
+    6. Transaction history
     0. Exit
     Please select you want to choose
     """
@@ -148,16 +148,17 @@ def marketGame():
     0. Exit
     Please select you want to choose
     """
+    shellingContent = """
+    1. Unit
+    2. Bulks
+    0. Exit
+    Please select you want to choose
+    """
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
             mtm.checkBag()
         if caseNumber == 2:
-            typeItem = market.getTypeItem()
-            orderType = market.getOrderType()
-            while 1 != 0:
-                mtm.getPriceInMarket(typeItem, orderType)
-        if caseNumber == 3:
             caseNumber = int(input(shoppingContent))
             if caseNumber == 1:
                 mtm.shopping()
@@ -165,12 +166,20 @@ def marketGame():
                 mtm.shoppingWithSetPrice()
             if caseNumber == 0:
                 continue
+        if caseNumber == 3:
+            caseNumber = int(input(shellingContent))
+            if caseNumber == 1:
+                mtm.shelling(caseNumber)
+            if caseNumber == 2:
+                mtm.shelling(caseNumber)
+            if caseNumber == 0:
+                continue
         if caseNumber == 4:
-            mtm.shellingUnitItem()
-        if caseNumber == 5:
             mtm.canceling()
-        if caseNumber == 6:
+        if caseNumber == 5:
             mtm.buyDrops()
+        if caseNumber == 6:
+            mtm.transactionHistory()
         if caseNumber == 0:
             return
 
