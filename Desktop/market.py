@@ -73,7 +73,7 @@ def tableSelect(types, exceptNumber=[]):
             print("Please choose number again:")
             continue
         elif number in exceptNumber:
-            print(f"{types[number]} is not available in market")
+            print(f"{types[number]} is not available")
             print("Please choose number again:")
             continue
         else:
