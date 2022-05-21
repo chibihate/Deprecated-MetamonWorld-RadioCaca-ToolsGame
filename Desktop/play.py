@@ -442,7 +442,7 @@ class MetamonPlayer:
                 # Update ability of metamon
                 status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
                 if status == False:  # This case for metamon lv 59 -> 60
-                    break
+                    return 60
                 statusBattle = self.battleIsland(
                     id, minScareBattleObjectAllLevel, levelBattleObject
                 )
@@ -458,6 +458,7 @@ class MetamonPlayer:
         if self.fragmentNum != 0:
             rateWin = self.battleWin / (self.battleLose + self.battleWin) * 100
         print(f"Rate: {round(rateWin)}%")
+        return 0
 
     def mintEgg(self):
         headers = {

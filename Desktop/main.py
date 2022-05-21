@@ -110,7 +110,11 @@ def playGame():
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
-            mtm.startBattleIsland()
+            status = mtm.startBattleIsland()
+            if status == 60:
+                continue
+            if status == 0:
+                return
         if caseNumber == 2:
             mtm.mintEgg()
         if caseNumber == 3:
