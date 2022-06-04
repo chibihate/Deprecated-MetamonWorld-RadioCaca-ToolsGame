@@ -1,6 +1,7 @@
 import requests
 from prettytable import PrettyTable
 import time
+import json
 
 # Global constants
 ## The attributes of metamon
@@ -11,6 +12,8 @@ attrType = {
     "4": "size",
     "5": "stealth",
 }
+# URLs to make api calls
+BASE_URL = "https://metamon-api.radiocaca.com/usm-api"
 
 
 class MetamonPlayer:
@@ -22,6 +25,9 @@ class MetamonPlayer:
         """
         ## The accessToken of wallet
         self.accessToken = accessToken
+        self.headers = {
+            "accessToken": self.accessToken,
+        }
         ## The address of wallet
         self.address = address
         ## Initialization fragment numbers, numbers of battle win and lose
@@ -29,42 +35,37 @@ class MetamonPlayer:
         self.fragmentNum = 0
         self.battleWin = 0
         self.battleLose = 0
+        self.status = True
+        self.payload_address = {"address": self.address}
+
+    def post_data(self, url, payload):
+        return json.loads(
+            requests.Session().post(url, data=payload, headers=self.headers).text
+        )
 
     def getMetamonsAtIsland(self):
         """! Get list of metamon at island
         @return List of metamon at island
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "orderType": "-1"}
         ## Url of API
-        url = "https://metamon-api.radiocaca.com/usm-api/getWalletPropertyList"
+        url = f"{BASE_URL}/getWalletPropertyList"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        return json.get("data").get("metamonList")
+        response = self.post_data(url, payload)
+        return response["data"]["metamonList"]
 
     def getMetamonsAtLostWorld(self):
         """! Get list of metamon at lost world
         @return List of metamon at lost world
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "orderType": "2", "position": 2}
         ## Url of API
-        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/monsterList"
+        url = f"{BASE_URL}/kingdom/monsterList"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        return json.get("data")
+        response = self.post_data(url, payload)
+        return response["data"]
 
     def showAllMetamons(self):
         """! Show off all metamons"""
@@ -150,10 +151,6 @@ class MetamonPlayer:
         @param type The type of attribute you want to upgrade
         @return The status of the request
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {
             "address": self.address,
@@ -161,22 +158,16 @@ class MetamonPlayer:
             "attrType": type,
         }
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/addAttrNeedAsset"
+        url = f"{BASE_URL}/addAttrNeedAsset"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        return json.get("code")
+        response = self.post_data(url, payload)
+        return response["code"]
 
     def addAttr(self, metamonId, type):
         """! Upgrade the attribute metamon
         @param metamonId The id of metamon inside Metamon Game
         @param type The type of attribute you want to upgrade
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {
             "address": self.address,
@@ -184,13 +175,11 @@ class MetamonPlayer:
             "attrType": type,
         }
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/addAttr"
+        url = f"{BASE_URL}/addAttr"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
+        response = self.post_data(url, payload)
         ## The upper number of data
-        upperNum = json.get("data").get("upperNum")
+        upperNum = response["data"]["upperNum"]
         ## Show the metamon is updated
         print(f"{metamonId} up {attrType[type]} is {upperNum}")
 
@@ -198,22 +187,14 @@ class MetamonPlayer:
         """! Reset exp of the metamon lv 60 when she travel to island
         @param metamonId The id of metamon inside Metamon Game
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "nftId": metamonId}
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/resetMonster"
+        url = f"{BASE_URL}/resetMonster"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        ## The status from data
-        code = json.get("code")
+        response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if code == "SUCCESS":
+        if response["code"] == "SUCCESS":
             print("Reseted monster successfully")
         else:
             print("Can't reset monster")
@@ -222,22 +203,14 @@ class MetamonPlayer:
         """! Up level of the metamon
         @param metamonId The id of metamon inside Metamon Game
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "nftId": metamonId}
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/updateMonster"
+        url = f"{BASE_URL}/updateMonster"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        ## The status from data
-        code = json.get("code")
+        response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if code == "SUCCESS":
+        if response["code"] == "SUCCESS":
             print("Updated monster successfully")
         else:
             print("Can't update monster")
@@ -246,22 +219,14 @@ class MetamonPlayer:
         """! Add a health index of the metamon
         @param metamonId The id of metamon inside Metamon Game
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "nftId": metamonId}
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/addHealthy"
+        url = f"{BASE_URL}/addHealthy"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        ## The status from data
-        code = json.get("code")
+        response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if code == "SUCCESS":
+        if response["code"] == "SUCCESS":
             print("Add healthy monster successfully")
         else:
             print("Can't add healthy monster")
@@ -273,19 +238,13 @@ class MetamonPlayer:
         @param metamonId The id of metamon inside Metamon Game
         @return The status of function
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {"address": self.address, "nftId": metamonId}
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/addFatigueNeedAsset"
+        url = f"{BASE_URL}/addFatigueNeedAsset"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        return json.get("code")
+        response = self.post_data(url, payload)
+        return response["code"]
 
     def addAttrAllMetamon(self):
         """! Add attribute for all metamons"""
@@ -304,12 +263,16 @@ class MetamonPlayer:
         caseNumber = input(helloContent)
         ## Loop through all metamons, first check ability to add attribute
         ## of the memontamon, if it is "SUCCESS", do add attribute to the metamon
+        metamonNumbers = 0
         for metamon in metamonsAtIsland:
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
+                metamonNumbers += 1
         for metamon in metamonsAtLostWorld:
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
+                metamonNumbers += 1
+        print(f"Total metamons are add attr: {metamonNumbers}")
 
     def getBattelObjects(self, metamonId, level):
         """! Get battle objects in the battle fields
@@ -317,10 +280,6 @@ class MetamonPlayer:
         @param level The level of the battle fields
         @return The list of battle objects in the battle field
         """
-        ## Headers of API
-        headers = {
-            "accessToken": self.accessToken,
-        }
         ## Payload of API
         payload = {
             "address": self.address,
@@ -328,12 +287,10 @@ class MetamonPlayer:
             "front": level,
         }
         ## URL of API
-        url = "https://metamon-api.radiocaca.com/usm-api/getBattelObjects"
+        url = f"{BASE_URL}/getBattelObjects"
         ## Get data from API via POST method
-        response = requests.request("POST", url, headers=headers, data=payload)
-        ## Transfrom raw data to json data
-        json = response.json()
-        return json.get("data").get("objects")
+        response = self.post_data(url, payload)
+        return response["data"]["objects"]
 
     def getMinScareBattleObject(self, metamonId, level):
         """! Get the mininum score battle object in the battle fields
@@ -376,20 +333,16 @@ class MetamonPlayer:
         return minScareBattleObjectAllLevel, levelBattleObject
 
     def battleIsland(self, myMonId, battleMonId, battleLevel):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {
             "address": self.address,
             "monsterA": myMonId,
             "monsterB": battleMonId,
             "battleLevel": battleLevel,
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/startBattle"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        self.fragmentNum += json.get("data").get("bpFragmentNum")
-        if json.get("data").get("challengeExp") == 5:
+        url = f"{BASE_URL}/startBattle"
+        response = self.post_data(url, payload)
+        self.fragmentNum += response["data"]["bpFragmentNum"]
+        if response["data"]["challengeExp"] == 5:
             self.battleWin += 1
             return True
         else:
@@ -397,7 +350,6 @@ class MetamonPlayer:
             return False
 
     def checkAbility(self, id, level, exp, expMax, hi):
-        status = True
         if level == 60 and exp == 395:
             self.resetMonster(id)
             exp = 0
@@ -405,7 +357,7 @@ class MetamonPlayer:
             self.updateMonster(id)
             level = 60
             exp = 0
-            status = False
+            self.status = False
         if level != 59 and exp >= expMax:
             self.updateMonster(id)
             exp = 0
@@ -416,11 +368,12 @@ class MetamonPlayer:
                 hi += 10
             else:
                 print("Please check HI is available or not")
-        return status, level, exp
+        return level, exp, hi
 
     def startBattleIsland(self):
         metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
+            self.status = True
             tokenId = metamon["tokenId"]
             id = metamon["id"]
             level = int(metamon["level"])
@@ -432,7 +385,7 @@ class MetamonPlayer:
                 f"Start {tokenId} with level:{level}, exp:{exp}, HI:{hi} and {tear} turns"
             )
             # Check ability of metamon before start battle
-            status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
+            level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
             # Get the mininum score scare object battle
             (
                 minScareBattleObjectAllLevel,
@@ -440,9 +393,9 @@ class MetamonPlayer:
             ) = self.getMinScareBattleObjectAllLevel(id, level)
             for i in range(tear):
                 # Update ability of metamon
-                status, level, exp = self.checkAbility(id, level, exp, expMax, hi)
-                if status == False:  # This case for metamon lv 59 -> 60
-                    return 60
+                level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
+                if self.status == False:  # This case for metamon lv 59 -> 60
+                    break
                 statusBattle = self.battleIsland(
                     id, minScareBattleObjectAllLevel, levelBattleObject
                 )
@@ -451,6 +404,8 @@ class MetamonPlayer:
                 else:
                     exp += 3
             print(f"End {tokenId}")
+            if self.status == False:  # This case for metamon lv 59 -> 60
+                continue
         print(f"Total egg fragments: {self.fragmentNum}")
         print(f"Total win battle: {self.battleWin}")
         print(f"Total lose battel: {self.battleLose}")
@@ -461,128 +416,153 @@ class MetamonPlayer:
         return 0
 
     def mintEgg(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-        url = "https://metamon-api.radiocaca.com/usm-api/composeMonsterEgg"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        code = json.get("code")
-        if code != "SUCCESS":
+        url = f"{BASE_URL}/composeMonsterEgg"
+        response = self.post_data(url, self.payload_address)
+        if response["code"] != "SUCCESS":
             print("Mint eggs failed!")
             return
-
         print(f"Minted eggs are success")
 
-    def getScoreGroupInKingdom(self, _scoreAverage, _monsterNum, _monsterNumRarity):
-        scoreAverage = 0
-        idSquad = 0
-        idSquadOfTheBest = 0
-        headers = {
-            "accessToken": self.accessToken,
-        }
+    def getScoreGroupInKingdom(self, thresholdSca):
         payload = {
             "address": self.address,
-            "teamId": -1,
+            "page": 1,
             "pageSize": 100,
+            "orderField": "monsterNum",
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/teamList"
-        response = requests.request(
-            "POST",
-            url,
-            headers=headers,
-            data=payload,
-        )
-        json = response.json()
-        squadList = json.get("data").get("list")
+        url = f"{BASE_URL}/kingdom/teamList"
+        response = self.post_data(url, payload)
+        squadList = response["data"]["list"]
         table = PrettyTable()
         table.field_names = [
-            "Score average",
-            "All monsters",
-            "R Monsters",
-            "Group name",
-            "ID group",
+            "Index",
+            "Group",
+            "Min",
+            "Score",
+            "Monsters",
+            "R",
         ]
-        table.align["Score average"] = "r"
-        table.align["All monsters"] = "r"
-        table.align["R Monsters"] = "r"
+        table.align["Index"] = "r"
         table.align["Group"] = "l"
-        table.align["ID"] = "r"
-
+        table.align["Score"] = "r"
+        table.align["Min"] = "r"
+        table.align["Monsters"] = "r"
+        table.align["R"] = "r"
+        indexSquad = 0
+        idSquadList = {}
+        monSquadList = {}
+        scaSquadList = {}
         for squad in squadList:
-            if int(squad["monsterNum"]) >= 100:
-                if (
-                    int(squad["monsterNum"]) > _monsterNum
-                    and scoreAverage < int(squad["averageSca"])
-                    or int(squad["monsterNumRarity"]) > _monsterNumRarity
-                ):
-                    scoreAverage = int(squad["averageSca"])
-                    idSquad = int(squad["id"])
+            if (
+                int(squad["monsterNum"]) >= 100
+                and str(squad["lockTeam"]).lower() == "false"
+                and int(squad["monsterScaThreshold"]) <= thresholdSca
+            ):
+                indexSquad += 1
+                idSquadList[indexSquad] = int(squad["id"])
+                monSquadList[indexSquad] = int(squad["monsterNum"])
+                scaSquadList[indexSquad] = int(squad["averageSca"])
                 table.add_row(
                     [
+                        indexSquad,
+                        squad["name"],
+                        squad["monsterScaThreshold"],
                         squad["averageSca"],
                         squad["monsterNum"],
                         squad["monsterNumRarity"],
-                        squad["name"],
-                        squad["id"],
                     ]
                 )
         print(table)
-        if (
-            scoreAverage > _scoreAverage
-            or int(squad["monsterNumRarity"]) > _monsterNumRarity
-        ):
-            idSquadOfTheBest = idSquad
-            print(
-                f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
-            )
-        return idSquadOfTheBest
+        return idSquadList, monSquadList, scaSquadList
 
-    def teamJoin(self, teamId):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address, "teamId": teamId}
-        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/teamJoin"
-        response = requests.request(
-            "POST",
-            url,
-            headers=headers,
-            data=payload,
-        )
-        json = response.json()
-        print(json)
+    def getMetamonIsReadyInKingdom(self):
+        metamons = self.getMetamonsAtLostWorld()
+        metamonsList = []
+        sca = 650
+        for metamon in metamons:
+            if str(metamon["kingdomLock"]).lower() == "false":
+                nftId = '{nftId: "' + str(metamon["id"]) + '"}'
+                metamonsList.append(nftId)
+                if int(metamon["sca"]) < sca:
+                    sca = int(metamon["sca"])
+        return metamonsList, sca
 
-    def joinTheBestSquad(self):
-        scoreAverage = int(input("Please enter your score average:\n"))
-        monsterNum = int(input("Please enter your monster number:\n"))
-        monsterNumRarity = int(input("Please enter your Rare monster number:\n"))
+    def joinLostWorldManual(self, metamonsList, sca):
+        print(f"We have {len(metamonsList)} metamons are available")
+        metamons = ", ".join(metamonsList)
+
         while 1 != 0:
-            idSquadOfTheBest = self.getScoreGroupInKingdom(
-                scoreAverage, monsterNum, monsterNumRarity
+            idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
+            caseNumber = int(
+                input(
+                    f"Select number in range {len(idSquadList)} to join - 0 to refresh\n"
+                )
             )
-            if idSquadOfTheBest == 0:
-                time.sleep(5)
+            if caseNumber == 0:
+                continue
+            elif caseNumber in range(len(idSquadList) + 1):
+                self.teamJoin(idSquadList[caseNumber], metamons)
                 continue
             else:
-                self.teamJoin(idSquadOfTheBest)
                 return
 
+    def joinLostWorldAutomatic(
+        self, _scoreAverage=650, _monsterNum=900, metamonsList=[], sca=650
+    ):
+        print(f"We have {len(metamonsList)} metamons are available")
+        metamons = ", ".join(metamonsList)
+
+        while 1 != 0:
+            idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
+
+            for i in range(len(idSquadList)):
+                if (monSquadList[i + 1] >= _monsterNum) and (
+                    scaSquadList[i + 1] >= _scoreAverage
+                ):
+                    print(
+                        f"Found the squad as your demand with score average is {_scoreAverage} and monster number is {_monsterNum}"
+                    )
+                    self.teamJoin(idSquadList[i + 1], metamons)
+                    return
+            time.sleep(5)
+
+    def teamJoin(self, teamId, metamons):
+        payload = {"address": self.address, "teamId": teamId}
+        url = f"{BASE_URL}/kingdom/teamJoin"
+        response = self.post_data(url, payload)
+        print(response)
+
+    def joinTheBestSquad(self):
+        joinSquadContent = """
+        1. Manual
+        2. Automatic
+        Please select you want to choose
+        """
+        metamonsList, sca = self.getMetamonIsReadyInKingdom()
+        if metamonsList == []:
+            print("No metamons are available")
+            return
+        caseNumber = int(input(joinSquadContent))
+        if caseNumber == 2:
+            scoreAverage = int(input("Please enter your score average:\n"))
+            monsterNum = int(input("Please enter your monster number:\n"))
+        while 1 != 0:
+            metamonsList, sca = self.getMetamonIsReadyInKingdom()
+            if metamonsList == []:
+                print("No metamons are available")
+                return
+            if caseNumber == 1:
+                self.joinLostWorldManual(metamonsList, sca)
+                continue
+            if caseNumber == 2:
+                self.joinLostWorldAutomatic(scoreAverage, monsterNum, metamonsList, sca)
+                continue
+
     def battleRecord(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {"address": self.address, "pageSize": 15, "battleId": -1}
-        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/battleRecord"
-        response = requests.request(
-            "POST",
-            url,
-            headers=headers,
-            data=payload,
-        )
-        json = response.json()
-        battleRecordDetails = json.get("data").get("battleRecordDetails")
+        url = f"{BASE_URL}/kingdom/battleRecord"
+        response = self.post_data(url, payload)
+        battleRecordDetails = response["data"]["battleRecordDetails"]
         table = PrettyTable()
         table.field_names = ["Date", "Monsters", "Valhalla", "Status"]
         table.align["Monsters"] = "r"
@@ -605,19 +585,9 @@ class MetamonPlayer:
         print(table)
 
     def getMyTeams(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-        url = "https://metamon-api.radiocaca.com/usm-api/kingdom/myTeams"
-        response = requests.request(
-            "POST",
-            url,
-            headers=headers,
-            data=payload,
-        )
-        json = response.json()
-        battles = json.get("data")
+        url = f"{BASE_URL}/kingdom/myTeams"
+        response = self.post_data(url, self.payload_address)
+        battles = response["data"]
         table = PrettyTable()
         table.field_names = [
             "My monsters",
