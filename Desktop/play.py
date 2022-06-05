@@ -350,7 +350,7 @@ class MetamonPlayer:
             return False
 
     def checkAbility(self, id, level, exp, expMax, hi):
-        if level == 60 and exp == 395:
+        if level == 60 and exp >= 395:
             self.resetMonster(id)
             exp = 0
         if level == 59 and exp == 600:
@@ -601,7 +601,7 @@ class MetamonPlayer:
         table.align["R monsters"] = "r"
         table.align["Team average"] = "r"
         for battle in battles:
-            myAverage = int(battle["mytotalSca"]) / int(battle["myMonsterNum"])
+            myAverage = round(int(battle["mytotalSca"]) / int(battle["myMonsterNum"]))
             table.add_row(
                 [
                     battle["myMonsterNum"],

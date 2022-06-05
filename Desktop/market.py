@@ -1,30 +1,31 @@
 import requests
 from prettytable import PrettyTable
 import time
+import json
 
 typeItems = {
     -1: "All",
     0: "Metamon",
     1: "Metamon Fragments",
     2: "Potion",
-    3: "Yellow diamond",
-    4: "Purple diamond",
+    3: "Yellow Diamond",
+    4: "Purple Diamond",
     5: "u-RACA",
-    6: "Egg",
-    7: "Space ticket",
+    6: "Metamon Egg",
+    7: "Space Ticket",
     8: "Valhalla",
     9: "N Battle Flag",
-    10: "Purple potion",
-    11: "Anti-fatigue potion",
-    12: "N stimulant",
-    13: "R stimulant",
-    14: "SR stimulant",
+    10: "Purple Potion",
+    11: "Anti-Fatigue Potion",
+    12: "N Stimulant",
+    13: "R Stimulant",
+    14: "SR Stimulant",
     1004: "Donuts",
     1007: "Spaceship",
     1008: "Rocket",
-    1015: "Villa fragments",
-    1016: "Mansion fragments",
-    1017: "Castle fragments",
+    1015: "Villa Fragments",
+    1016: "Mansion Fragments",
+    1017: "Castle Fragments",
     1018: "Villa",
     1019: "Mansion",
     1020: "Castle",
@@ -57,6 +58,9 @@ dealTypes = {
     20: "Reset",
 }
 
+# URLs to make api calls
+BASE_URL = "https://metamon-api.radiocaca.com/usm-api"
+
 
 def tableSelect(types, exceptNumber=[]):
     table = PrettyTable()
@@ -64,17 +68,19 @@ def tableSelect(types, exceptNumber=[]):
     table.align["Number"] = "r"
     table.align["Item"] = "l"
     for numberID in types:
+        if numberID in exceptNumber:
+            continue
         table.add_row([numberID, types[numberID]])
-    print(str(table) + "\nPlease choose number:")
+    print(str(table) + "\nPlease choose number is beyond:")
     while 1 != 0:
         number = int(input())
         if number not in types.keys():
             print("Number is out of range")
-            print("Please choose number again:")
+            print(str(table) + "\nPlease choose number is beyond again:")
             continue
         elif number in exceptNumber:
             print(f"{types[number]} is not available")
-            print("Please choose number again:")
+            print(str(table) + "\nPlease choose number is beyond again:")
             continue
         else:
             return number
@@ -83,49 +89,76 @@ def tableSelect(types, exceptNumber=[]):
 class MetamonPlayer:
     def __init__(self, address, accessToken):
         self.accessToken = accessToken
-        self.address = address
-        self.fragmentNum = 0
-        self.battleWin = 0
-        self.battleLose = 0
-
-    def checkBag(self):
-        headers = {
+        self.headers = {
             "accessToken": self.accessToken,
         }
-        payload = {"address": self.address}
+        self.address = address
+        self.payload_address = {"address": self.address}
+        self.orderId = -1
+        self.orderAmount = ""
 
-        url = "https://metamon-api.radiocaca.com/usm-api/checkBag"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        itemsInBag = json.get("data").get("item")
+    def post_data(self, url, payload):
+        return json.loads(
+            requests.Session().post(url, data=payload, headers=self.headers).text
+        )
+
+    def checkBag(self):
+        itemsInGame = {}
+        urlCheckBag = f"{BASE_URL}/checkBag"
+        responseCheckBag = self.post_data(urlCheckBag, self.payload_address)
+        itemsInCheckBag = responseCheckBag["data"]["item"]
+        for item in itemsInCheckBag:
+            if item["bpType"] > 0 and int(item["bpNum"]) > 0:
+                itemsInGame[typeItems[int(item["bpType"])]] = item["bpNum"]
+
+        urlSellBag = f"{BASE_URL}//shop-order/sellBag"
+        responseSellBag = self.post_data(urlSellBag, self.payload_address)
+        itemsInSellBag = responseSellBag["data"]
+        for item in itemsInSellBag:
+            itemsInGame[typeItems[int(item["type"])]] = item["bpNum"]
+
+        urlGetBpOther = f"{BASE_URL}/getBpOther"
+        payload = {
+            "address": self.address,
+            "pageSize": 20,
+            "bpId": "-1",
+            "bpRecordId": "-1",
+        }
+        responseGetBpOther = self.post_data(urlGetBpOther, payload)
+        itemsInGetBpOther = responseGetBpOther["data"]["list"]
+        for item in itemsInGetBpOther:
+            itemsInGame[item["symbol"]] = item["bpNum"]
+
         table = PrettyTable()
         table.title = "All items in bag"
         table.field_names = ["Item", "Amount"]
         table.align["Amount"] = "r"
         table.align["Item"] = "l"
-        for item in itemsInBag:
-            if item["bpType"] > 0 and int(item["bpNum"]) > 0:
-                table.add_row([typeItems[int(item["bpType"])], item["bpNum"]])
+        for item, amount in itemsInGame.items():
+            table.add_row([item, amount])
         print(table)
 
-    def getShopOrderList(self, typeItem, orderType, pageSize):
-        headers = {
-            "accessToken": self.accessToken,
-        }
+    def getShopOrderList(
+        self, _typeItem, _orderType, _orderId=-1, _orderAmount="", _pageSize=1
+    ):
         payload = {
             "address": self.address,
-            "type": typeItem,
-            "orderType": orderType,
-            "orderId": "-1",
-            "pageSize": pageSize,
+            "type": _typeItem,
+            "orderType": _orderType,
+            "orderId": _orderId,
+            "pageSize": _pageSize,
+            "orderAmount": _orderAmount,
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/shop-order/sellList"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        return json.get("data").get("shopOrderList")
+        url = f"{BASE_URL}/shop-order/sellList"
+        response = self.post_data(url, payload)
+        return response["data"]["shopOrderList"]
 
-    def getPriceInMarket(self, typeItem, orderType):
-        shopOrderList = self.getShopOrderList(typeItem, orderType, 15)
+    def getPriceInMarket(
+        self, _typeItem, _orderType, _orderId=-1, _orderAmount="", _pageSize=1
+    ):
+        shopOrderList = self.getShopOrderList(
+            _typeItem, _orderType, _orderId, _orderAmount, _pageSize
+        )
         indexNumber = 0
         table = PrettyTable()
         table.field_names = ["Index", "Unit price", "Quantity", "Total price"]
@@ -133,10 +166,12 @@ class MetamonPlayer:
         table.align["Unit price"] = "r"
         table.align["Quantity"] = "r"
         table.align["Total price"] = "r"
-        result = {}
+        orderId = {}
+        orderAmount = {}
         for shopOrder in shopOrderList:
             indexNumber += 1
-            result[indexNumber] = shopOrder["id"]
+            orderId[indexNumber] = shopOrder["id"]
+            orderAmount[indexNumber] = str(shopOrder["amount"])
             table.add_row(
                 [
                     indexNumber,
@@ -146,46 +181,54 @@ class MetamonPlayer:
                 ]
             )
         print(table)
-        return result
+        return orderId, orderAmount
 
     def buyItem(self, orderId):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {"address": self.address, "orderId": orderId}
 
-        url = "https://metamon-api.radiocaca.com/usm-api/shop-order/buy"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
+        url = f"{BASE_URL}/shop-order/buy"
+        response = self.post_data(url, payload)
+        print(response)
 
     def shellItem(self, typeItem, quantity, price):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {
             "address": self.address,
             "type": typeItem,
             "quantity": quantity,
             "amount": price,
         }
-
-        url = "https://metamon-api.radiocaca.com/usm-api/shop-order/sell"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
+        url = f"{BASE_URL}/shop-order/sell"
+        response = self.post_data(url, payload)
+        print(response)
 
     def shopping(self):
         exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
         typeItem = tableSelect(typeItems, exceptNumber)
         orderType = tableSelect(orderTypes)
+        self.orderId = -1
+        self.orderAmount = ""
+        pageSize = 15
         while 1 != 0:
-            priceInMarket = self.getPriceInMarket(typeItem, orderType)
-            caseNumber = int(input("Select 1-15 to buy - 0 to refresh\n"))
+            orderId, orderAmount = self.getPriceInMarket(
+                typeItem, orderType, self.orderId, self.orderAmount, pageSize
+            )
+            caseNumber = int(
+                input(
+                    f"1-{pageSize} to buy, 0 to get latest, {(pageSize +1)} to load more\n"
+                )
+            )
             if caseNumber == 0:
+                self.orderId = -1
+                self.orderAmount = ""
                 continue
-            elif caseNumber in range(16):
-                self.buyItem(priceInMarket[caseNumber])
+            elif caseNumber == (pageSize + 1):
+                self.orderId = orderId[pageSize]
+                self.orderAmount = orderAmount[pageSize]
+                continue
+            elif caseNumber in range((pageSize + 1)):
+                self.orderId = -1
+                self.orderAmount = ""
+                self.buyItem(orderId[caseNumber])
                 continue
             else:
                 return
@@ -194,8 +237,8 @@ class MetamonPlayer:
         exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
         typeItem = tableSelect(typeItems, exceptNumber)
         orderType = tableSelect(orderTypes)
-        self.getPriceInMarket(typeItem, orderType)
-        item = self.getShopOrderList(typeItem, orderType, 1)
+        self.getPriceInMarket(typeItem, orderType, -1, "", 15)
+        item = self.getShopOrderList(typeItem, orderType)
         lowestPrice = int(item[0]["amount"])
         print(f"The lowest price of item is {lowestPrice}")
         shoppingContent = """
@@ -210,7 +253,7 @@ class MetamonPlayer:
         if caseNumber == 0:
             return
         while 1 != 0:
-            item = self.getShopOrderList(typeItem, orderType, 1)
+            item = self.getShopOrderList(typeItem, orderType)
             price = int(item[0]["amount"])
             orderId = item[0]["id"]
             if caseNumber == 1:
@@ -233,8 +276,8 @@ class MetamonPlayer:
             orderType = 2
             quantity = int(input("Please enter your quantity: "))
         while 1 != 0:
-            self.getPriceInMarket(typeItem, orderType)
-            shopOrderList = self.getShopOrderList(typeItem, orderType, 1)
+            self.getPriceInMarket(typeItem, orderType, -1, "", 15)
+            shopOrderList = self.getShopOrderList(typeItem, orderType)
             lowestPrice = int(shopOrderList[0]["amount"])
             print(f"The lowest price is {lowestPrice}")
             caseNumber = int(input("1. Shell lowest\n2. Set the price\n"))
@@ -251,18 +294,14 @@ class MetamonPlayer:
                 return
 
     def getOnSaleList(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {
             "address": self.address,
             "orderId": "-1",
             "pageSize": 20,
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/shop-order/onSaleList"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        return json.get("data").get("shopOrderList")
+        url = f"{BASE_URL}/shop-order/onSaleList"
+        response = self.post_data(url, payload)
+        return response["data"]["shopOrderList"]
 
     def getItemsOnSale(self):
         itemOnSale = self.getOnSaleList()
@@ -291,15 +330,10 @@ class MetamonPlayer:
         return result
 
     def cancelItem(self, orderId):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {"address": self.address, "orderId": orderId}
-
-        url = "https://metamon-api.radiocaca.com/usm-api/shop-order/cancel"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
+        url = f"{BASE_URL}/shop-order/cancel"
+        response = self.post_data(url, payload)
+        print(response)
 
     def canceling(self):
         while 1 != 0:
@@ -318,15 +352,9 @@ class MetamonPlayer:
                 return
 
     def buyItemInDrops(self, orderId):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-
-        url = f"https://metamon-api.radiocaca.com/usm-api/official-sale/buy?orderId={orderId}"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        print(json)
+        url = f"{BASE_URL}/official-sale/buy?orderId={orderId}"
+        response = self.post_data(url, self.payload_address)
+        print(response)
 
     def buyDrops(self):
         helloContent = """
@@ -350,9 +378,6 @@ class MetamonPlayer:
             return
 
     def getNftRecord(self, typeItem, dealType, bpNftId=-1, bpOtherId=-1, bpRacaId=-1):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {
             "address": self.address,
             "bpType": typeItem,
@@ -364,13 +389,12 @@ class MetamonPlayer:
             "bpOtherId": bpOtherId,
             "farmOrderId": -1,
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/getNftRecord"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        nftRecords = json.get("data").get("nftRecords")
-        bpNftId = json.get("data").get("bpNftId")
-        bpOtherId = json.get("data").get("bpOtherId")
-        bpRacaId = json.get("data").get("bpRacaId")
+        url = f"{BASE_URL}/getNftRecord"
+        response = self.post_data(url, payload)
+        nftRecords = response["data"]["nftRecords"]
+        bpNftId = response["data"]["bpNftId"]
+        bpOtherId = response["data"]["bpOtherId"]
+        bpRacaId = response["data"]["bpRacaId"]
         table = PrettyTable()
         table.field_names = ["Type", "Deal", "Deal Num", "Detail", "Time"]
         table.align["Type"] = "l"
