@@ -3,7 +3,6 @@ import play
 import json
 import requests
 import os
-from prettytable import PrettyTable
 from dotenv import load_dotenv
 
 load_dotenv()

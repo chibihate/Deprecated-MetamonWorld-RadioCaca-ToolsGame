@@ -1,62 +1,67 @@
 import market
 import play
+import json
 import requests
 
 ADDRESS_WALLET = "your_ADDRESS_WALLET"
 SIGN_WALLET = "your_ADDRESS_WALLET"
 MSG_WALLET = "your_MSG_WALLET"
-accessTokenGame = ""
+
+# URLs to make api calls
+BASE_URL = "https://metamon-api.radiocaca.com/usm-api"
 
 
-class AccessGame:
+class MetamonPlayer:
     def __init__(self, address, sign, msg):
-        self.accessToken = None
+        self.accessToken = ""
         self.address = address
         self.sign = sign
         self.msg = msg
-        self.initAccessToken()
-
-    def getAccessToken(self):
-        """Obtain token for game session to perform battles and other actions"""
-        payload = {
+        self.headers = {
+            "accessToken": self.accessToken,
+        }
+        self.payload_address = {"address": self.address}
+        self.payload_login = {
             "address": self.address,
             "sign": self.sign,
             "msg": self.msg,
             "network": "1",
             "clientType": "MetaMask",
         }
-        url = "https://metamon-api.radiocaca.com/usm-api/login"
-        response = requests.request("POST", url, data=payload)
-        json = response.json()
-        if json.get("code") != "SUCCESS":
+        self.initAccessToken()
+
+    def post_data(self, url, payload):
+        return json.loads(
+            requests.Session().post(url, data=payload, headers=self.headers).text
+        )
+
+    def getAccessToken(self):
+        """Obtain token for game session to perform battles and other actions"""
+        url = f"{BASE_URL}/login"
+        response = self.post_data(url, self.payload_login)
+        if response["code"] != "SUCCESS":
             print("Can't get accessToken")
             exit()
         else:
-            self.accessToken = json.get("data").get("accessToken")
+            self.accessToken = response["data"]["accessToken"]
+            self.headers = {
+                "accessToken": self.accessToken,
+            }
 
     def getLoginCode(self):
-        headers = {
-            "accessToken": self.accessToken,
-        }
-        payload = {"address": self.address}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/sendLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        if json.get("code") != "SUCCESS":
+        url = f"{BASE_URL}/owner-setting/email/sendLoginCode"
+        response = self.post_data(url, self.payload_address)
+        if response["code"] != "SUCCESS":
             print("Can't send login code to email")
             exit()
         else:
             print("Code is sending to your email. Kindly check")
 
     def verifyLoginCode(self, loginCode):
-        headers = {
-            "accessToken": self.accessToken,
-        }
         payload = {"address": self.address, "code": loginCode}
-        url = "https://metamon-api.radiocaca.com/usm-api/owner-setting/email/verifyLoginCode"
-        response = requests.request("POST", url, headers=headers, data=payload)
-        json = response.json()
-        return json.get("code")
+        url = f"{BASE_URL}/owner-setting/email/verifyLoginCode"
+        response = self.post_data(url, payload)
+        return response["code"]
 
     def initAccessToken(self):
         self.getAccessToken()
@@ -72,16 +77,15 @@ class AccessGame:
                 return
 
 
-def playGame():
-    mtm = play.MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessTokenGame)
+def playGame(accessToken):
+    mtm = play.MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessToken)
     helloContent = """
     1. Battle in Island
     2. Mint eggs
-    3. Show all metamons
-    4. Up attribute all monsters   
-    5. Join the best squad in Lost world
-    6. Battle record in Lost world
-    7. Get status my teams in Lost world
+    3. Up attribute all monsters   
+    4. Join the best squad in Lost world
+    5. Battle record in Lost world
+    6. Get status my teams in Lost world
     0. Exit
     Please select you want to choose
     """
@@ -96,21 +100,19 @@ def playGame():
         if caseNumber == 2:
             mtm.mintEgg()
         if caseNumber == 3:
-            mtm.showAllMetamons()
-        if caseNumber == 4:
             mtm.addAttrAllMetamon()
-        if caseNumber == 5:
+        if caseNumber == 4:
             mtm.joinTheBestSquad()
-        if caseNumber == 6:
+        if caseNumber == 5:
             mtm.battleRecord()
-        if caseNumber == 7:
+        if caseNumber == 6:
             mtm.getMyTeams()
         if caseNumber == 0:
             return
 
 
-def marketGame():
-    mtm = market.MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessTokenGame)
+def marketGame(accessToken):
+    mtm = market.MetamonPlayer(address=ADDRESS_WALLET, accessToken=accessToken)
     helloContent = """
     1. Check bag
     2. Shopping
@@ -165,22 +167,17 @@ def marketGame():
 
 if __name__ == "__main__":
     helloContent = """
-    1. Get access token game
-    2. Play game
-    3. Market game
+    1. Play game
+    2. Market game
     0. Exit
     Please select you want to choose
     """
+    mtm = MetamonPlayer(address=ADDRESS_WALLET, sign=SIGN_WALLET, msg=MSG_WALLET)
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
-            getAccessTokenGame = AccessGame(
-                address=ADDRESS_WALLET, sign=SIGN_WALLET, msg=MSG_WALLET
-            )
-            accessTokenGame = getAccessTokenGame.accessToken
+            playGame(mtm.accessToken)
         if caseNumber == 2:
-            playGame()
-        if caseNumber == 3:
-            marketGame()
+            marketGame(mtm.accessToken)
         if caseNumber == 0:
             exit()
