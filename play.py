@@ -53,6 +53,8 @@ class MetamonPlayer:
         url = f"{BASE_URL}/getWalletPropertyList"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("getWalletPropertyList: " + response["message"])
         return response["data"]["metamonList"]
 
     def getMetamonsAtLostWorld(self):
@@ -65,6 +67,8 @@ class MetamonPlayer:
         url = f"{BASE_URL}/kingdom/monsterList"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("monsterList: " + response["message"])
         return response["data"]
 
     def showAllMetamons(self):
@@ -78,28 +82,28 @@ class MetamonPlayer:
         table.field_names = [
             "ID",
             "Rare",
-            "Level",
+            "Lv",
+            "Scare",
             "Exp",
             "Luck",
-            "Courage",
-            "Wisdom",
+            "Cour",
+            "Wis",
             "Size",
-            "Stealth",
+            "Steal",
             "HI",
             "Position",
             "Race",
             "Unlock Date",
         ]
         ## Align of these field names
-        table.align["ID"] = "r"
         table.align["Rare"] = "r"
-        table.align["Level"] = "r"
+        table.align["Lv"] = "r"
         table.align["Exp"] = "r"
         table.align["Luck"] = "r"
-        table.align["Courage"] = "r"
-        table.align["Wisdom"] = "r"
+        table.align["Cour"] = "r"
+        table.align["Wis"] = "r"
         table.align["Size"] = "r"
-        table.align["Stealth"] = "r"
+        table.align["Steal"] = "r"
         table.align["HI"] = "r"
         table.align["Position"] = "l"
         table.align["Race"] = "l"
@@ -110,6 +114,7 @@ class MetamonPlayer:
                     metamon["tokenId"],
                     metamon["rarity"],
                     metamon["level"],
+                    metamon["sca"],
                     metamon["exp"],
                     metamon["luk"],
                     metamon["crg"],
@@ -129,6 +134,7 @@ class MetamonPlayer:
                     metamon["tokenId"],
                     metamon["rarity"],
                     metamon["level"],
+                    metamon["sca"],
                     metamon["exp"],
                     metamon["luk"],
                     metamon["crg"],
@@ -161,6 +167,8 @@ class MetamonPlayer:
         url = f"{BASE_URL}/addAttrNeedAsset"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("addAttrNeedAsset: " + response["message"])
         return response["code"]
 
     def addAttr(self, metamonId, type):
@@ -178,10 +186,13 @@ class MetamonPlayer:
         url = f"{BASE_URL}/addAttr"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
-        ## The upper number of data
-        upperNum = response["data"]["upperNum"]
-        ## Show the metamon is updated
-        print(f"{metamonId} up {attrType[type]} is {upperNum}")
+        if response["code"] != "SUCCESS":
+            print("addAttr: " + response["message"])
+        else:
+            ## The upper number of data
+            upperNum = response["data"]["upperNum"]
+            ## Show the metamon is updated
+            print(f"{metamonId} up {attrType[type]} is {upperNum}")
 
     def resetMonster(self, metamonId):
         """! Reset exp of the metamon lv 60 when she travel to island
@@ -194,10 +205,10 @@ class MetamonPlayer:
         ## Get data from API via POST method
         response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if response["code"] == "SUCCESS":
-            print("Reseted monster successfully")
+        if response["code"] != "SUCCESS":
+            print("resetMonster: " + response["message"])
         else:
-            print("Can't reset monster")
+            print("Reseted monster successfully")
 
     def updateMonster(self, metamonId):
         """! Up level of the metamon
@@ -210,10 +221,10 @@ class MetamonPlayer:
         ## Get data from API via POST method
         response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if response["code"] == "SUCCESS":
-            print("Updated monster successfully")
+        if response["code"] != "SUCCESS":
+            print("updateMonster: " + response["message"])
         else:
-            print("Can't update monster")
+            print("Updated monster successfully")
 
     def addHealthy(self, metamonId):
         """! Add a health index of the metamon
@@ -226,10 +237,10 @@ class MetamonPlayer:
         ## Get data from API via POST method
         response = self.post_data(url, payload)
         ## Show off the notice when status when the status is "SUCCESS" or not
-        if response["code"] == "SUCCESS":
-            print("Add healthy monster successfully")
+        if response["code"] != "SUCCESS":
+            print("addHealthy: " + response["message"])
         else:
-            print("Can't add healthy monster")
+            print("Add healthy monster successfully")
 
     def addFatigueNeedAsset(self, metamonId):
         """! Check ability recover healthy index
@@ -244,6 +255,8 @@ class MetamonPlayer:
         url = f"{BASE_URL}/addFatigueNeedAsset"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("addFatigueNeedAsset: " + response["message"])
         return response["code"]
 
     def addAttrAllMetamon(self):
@@ -290,6 +303,8 @@ class MetamonPlayer:
         url = f"{BASE_URL}/getBattelObjects"
         ## Get data from API via POST method
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("getBattelObjects: " + response["message"])
         return response["data"]["objects"]
 
     def getMinScareBattleObject(self, metamonId, level):
@@ -341,6 +356,8 @@ class MetamonPlayer:
         }
         url = f"{BASE_URL}/startBattle"
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("startBattle: " + response["message"])
         self.fragmentNum += response["data"]["bpFragmentNum"]
         if response["data"]["challengeExp"] == 5:
             self.battleWin += 1
@@ -362,12 +379,9 @@ class MetamonPlayer:
             self.updateMonster(id)
             exp = 0
             level += 1
-        if hi <= 90:
-            if self.addFatigueNeedAsset(id) == "SUCCESS":
-                self.addHealthy(id)
-                hi += 10
-            else:
-                print("Please check HI is available or not")
+        if hi <= 90 and self.addFatigueNeedAsset(id) == "SUCCESS":
+            self.addHealthy(id)
+            hi += 10
         return level, exp, hi
 
     def startBattleIsland(self):
@@ -419,7 +433,7 @@ class MetamonPlayer:
         url = f"{BASE_URL}/composeMonsterEgg"
         response = self.post_data(url, self.payload_address)
         if response["code"] != "SUCCESS":
-            print("Mint eggs failed!")
+            print("composeMonsterEgg: " + response["message"])
             return
         print(f"Minted eggs are success")
 
@@ -432,22 +446,20 @@ class MetamonPlayer:
         }
         url = f"{BASE_URL}/kingdom/teamList"
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("teamList: " + response["message"])
         squadList = response["data"]["list"]
         table = PrettyTable()
         table.field_names = [
             "Index",
             "Group",
-            "Min",
             "Score",
-            "Monsters",
-            "R",
+            "Mons",
         ]
         table.align["Index"] = "r"
         table.align["Group"] = "l"
         table.align["Score"] = "r"
-        table.align["Min"] = "r"
-        table.align["Monsters"] = "r"
-        table.align["R"] = "r"
+        table.align["Mons"] = "r"
         indexSquad = 0
         idSquadList = {}
         monSquadList = {}
@@ -466,10 +478,8 @@ class MetamonPlayer:
                     [
                         indexSquad,
                         squad["name"],
-                        squad["monsterScaThreshold"],
                         squad["averageSca"],
                         squad["monsterNum"],
-                        squad["monsterNumRarity"],
                     ]
                 )
         print(table)
@@ -527,9 +537,15 @@ class MetamonPlayer:
             time.sleep(5)
 
     def teamJoin(self, teamId, metamons):
-        payload = {"address": self.address, "teamId": teamId}
+        payload = {
+            "address": self.address,
+            "teamId": teamId,
+            "metamons": f"[{metamons}]",
+        }
         url = f"{BASE_URL}/kingdom/teamJoin"
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("teamJoin: " + response["message"])
         print(response)
 
     def joinTheBestSquad(self):
@@ -562,6 +578,8 @@ class MetamonPlayer:
         payload = {"address": self.address, "pageSize": 15, "battleId": -1}
         url = f"{BASE_URL}/kingdom/battleRecord"
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("battleRecord: " + response["message"])
         battleRecordDetails = response["data"]["battleRecordDetails"]
         table = PrettyTable()
         table.field_names = ["Date", "Monsters", "Valhalla", "Status"]
@@ -587,27 +605,29 @@ class MetamonPlayer:
     def getMyTeams(self):
         url = f"{BASE_URL}/kingdom/myTeams"
         response = self.post_data(url, self.payload_address)
+        if response["code"] != "SUCCESS":
+            print("myTeams: " + response["message"])
         battles = response["data"]
         table = PrettyTable()
         table.field_names = [
-            "My monsters",
-            "My average",
-            "R monsters",
-            "Team average",
+            "Mons",
+            "Sca",
+            "Team",
+            "R",
             "Unlock date",
         ]
-        table.align["My monsters"] = "r"
-        table.align["My average"] = "r"
-        table.align["R monsters"] = "r"
-        table.align["Team average"] = "r"
+        table.align["Mons"] = "r"
+        table.align["Sca"] = "r"
+        table.align["R"] = "r"
+        table.align["Team"] = "r"
         for battle in battles:
             myAverage = round(int(battle["mytotalSca"]) / int(battle["myMonsterNum"]))
             table.add_row(
                 [
                     battle["myMonsterNum"],
                     myAverage,
-                    battle["monsterNumRarity"],
                     battle["averageSca"],
+                    battle["monsterNumRarity"],
                     battle["unlockDate"],
                 ]
             )
