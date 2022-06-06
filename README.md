@@ -33,23 +33,96 @@ command
 
 ## Prepare wallet(s) information
 
-Please reference <a href='https://github.com/MetaMon-game-player/MetamonPlayer'>this article</a> to get ADDRESS_WALLET, SIGN_WALLET, MSG_WALLET.
+Please reference <a href='https://github.com/MetaMon-game-player/MetamonPlayer'>this article</a> to get ADDRESS_WALLET, SIGN_WALLET, MSG_WALLET, ACCESS_TOKEN.
 
 If you install successfully the library <a href='https://pypi.org/project/python-dotenv/'>python-dotenv</a>
 - Change .env file and use desktop.py as a main file.
+
 If not
 - Change inside mobile.py and use it as a main file.
 
 # Preparation is complete! 
-## Ready to roll?
-
-For <b>Desktop version</b>:
+## Desktop version:
 
     python3 desktop.py
     
+If <b>ACCESS_TOKEN</b> is still valid, we go to dashboard.
 
-For <b>Mobile version</b>:
+If not, message will be like:
+
+    Code is sending to your email. Kindly check
+    Please fill your code:
+    0000 (You put 2FA from your email)
+    Email is verified
+
+Dashboard message:
+    
+    1. Play game
+    2. Market game
+    0. Exit
+    Please select you want to choose
+    
+Play game message:
+
+    1. Battle in Island
+    2. Mint eggs
+    3. Show all metamons
+    4. Up attribute all monsters   
+    5. Join the best squad in Lost world
+    6. Battle record in Lost world
+    7. Get status my teams in Lost world
+    0. Exit
+    Please select you want to choose
+    
+Market game message:
+
+    1. Check bag
+    2. Shopping
+    3. Shelling
+    4. Canceling
+    5. Buy item in drops
+    6. Transaction history
+    0. Exit
+    Please select you want to choose
+
+## Mobile version:
 
     python3 mobile.py
+        
+Message:
+
+    Code is sending to your email. Kindly check
+    Please fill your code:
+    0000 (You put 2FA from your email)
+    Email is verified
+        
+Dashboard message:
     
-   
+    1. Play game
+    2. Market game
+    0. Exit
+    Please select you want to choose
+    
+Play game message:
+
+    1. Battle in Island
+    2. Mint eggs
+    3. Up attribute all monsters   
+    4. Join the best squad in Lost world
+    5. Battle record in Lost world
+    6. Get status my teams in Lost world
+    0. Exit
+    Please select you want to choose
+    
+Market game message:
+
+    1. Check bag
+    2. Shopping
+    3. Shelling
+    4. Canceling
+    5. Buy item in drops
+    6. Transaction history
+    0. Exit
+    Please select you want to choose
+
+Hope you will have fun playing and this script will make it a little bit less tedious. Enjoy!
