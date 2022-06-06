@@ -36,10 +36,10 @@ command
 Please reference <a href='https://github.com/MetaMon-game-player/MetamonPlayer'>this article</a> to get ADDRESS_WALLET, SIGN_WALLET, MSG_WALLET, ACCESS_TOKEN.
 
 If you install successfully the library <a href='https://pypi.org/project/python-dotenv/'>python-dotenv</a>
-- Change .env file and use desktop.py as a main file.
+- Change .env file and use <a href='https://github.com/chibihate/Metamon-RadioCaca-Tools#desktop-version'>desktop.py</a> as a main file.
 
 If not
-- Change inside mobile.py and use it as a main file.
+- Change inside <a href='https://github.com/chibihate/Metamon-RadioCaca-Tools#mobile-version'>mobile.py</a> and use it as a main file.
 
 # Preparation is complete! 
 ## Desktop version:
