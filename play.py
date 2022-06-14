@@ -55,6 +55,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("getWalletPropertyList: " + response["message"])
+            return
         return response["data"]["metamonList"]
 
     def getMetamonsAtLostWorld(self):
@@ -69,6 +70,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("monsterList: " + response["message"])
+            return
         return response["data"]
 
     def showAllMetamons(self):
@@ -169,6 +171,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("addAttrNeedAsset: " + response["message"])
+            return
         return response["code"]
 
     def addAttr(self, metamonId, type):
@@ -188,6 +191,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("addAttr: " + response["message"])
+            return
         else:
             ## The upper number of data
             upperNum = response["data"]["upperNum"]
@@ -207,6 +211,7 @@ class MetamonPlayer:
         ## Show off the notice when status when the status is "SUCCESS" or not
         if response["code"] != "SUCCESS":
             print("resetMonster: " + response["message"])
+            return
         else:
             print("Reseted monster successfully")
 
@@ -223,6 +228,7 @@ class MetamonPlayer:
         ## Show off the notice when status when the status is "SUCCESS" or not
         if response["code"] != "SUCCESS":
             print("updateMonster: " + response["message"])
+            return
         else:
             print("Updated monster successfully")
 
@@ -239,6 +245,7 @@ class MetamonPlayer:
         ## Show off the notice when status when the status is "SUCCESS" or not
         if response["code"] != "SUCCESS":
             print("addHealthy: " + response["message"])
+            return
         else:
             print("Add healthy monster successfully")
 
@@ -257,6 +264,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("addFatigueNeedAsset: " + response["message"])
+            return
         return response["code"]
 
     def addAttrAllMetamon(self):
@@ -281,10 +289,12 @@ class MetamonPlayer:
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
                 metamonNumbers += 1
+            time.sleep(5)
         for metamon in metamonsAtLostWorld:
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
                 metamonNumbers += 1
+            time.sleep(5)
         print(f"Total metamons are add attr: {metamonNumbers}")
 
     def getBattelObjects(self, metamonId, level):
@@ -305,6 +315,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("getBattelObjects: " + response["message"])
+            return
         return response["data"]["objects"]
 
     def getMinScareBattleObject(self, metamonId, level):
@@ -358,6 +369,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("startBattle: " + response["message"])
+            return
         self.fragmentNum += response["data"]["bpFragmentNum"]
         if response["data"]["challengeExp"] == 5:
             self.battleWin += 1
@@ -448,6 +460,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("teamList: " + response["message"])
+            return
         squadList = response["data"]["list"]
         table = PrettyTable()
         table.field_names = [
@@ -534,12 +547,12 @@ class MetamonPlayer:
                     )
                     self.teamJoin(idSquadList[i + 1], metamons)
                     return
-            time.sleep(5)
+            time.sleep(10)
 
     def teamJoin(self, teamId, metamons):
         payload = {
             "address": self.address,
-            "teamId": teamId,
+            "teamId": str(teamId),
             "metamons": f"[{metamons}]",
         }
         url = f"{BASE_URL}/kingdom/teamJoin"
@@ -580,6 +593,7 @@ class MetamonPlayer:
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("battleRecord: " + response["message"])
+            return
         battleRecordDetails = response["data"]["battleRecordDetails"]
         table = PrettyTable()
         table.field_names = ["Date", "Monsters", "Valhalla", "Status"]
@@ -607,6 +621,7 @@ class MetamonPlayer:
         response = self.post_data(url, self.payload_address)
         if response["code"] != "SUCCESS":
             print("myTeams: " + response["message"])
+            return
         battles = response["data"]
         table = PrettyTable()
         table.field_names = [

@@ -441,16 +441,119 @@ class MetamonPlayer:
         dealType = tableSelect(dealTypes)
         bpNftId, bpOtherId, bpRacaId = self.getNftRecord(typeItem, dealType)
         helloContent = """
-        1. You want to see more
+        1. Get the latest
+        2. You want to see more
         0. Exit
         Please select you want to choose
         """
         while 1 != 0:
             caseNumber = int(input(helloContent))
             if caseNumber == 1:
+                bpNftId, bpOtherId, bpRacaId = self.getNftRecord(typeItem, dealType)
+                continue
+            if caseNumber == 2:
                 bpNftId, bpOtherId, bpRacaId = self.getNftRecord(
                     typeItem, dealType, bpNftId, bpOtherId, bpRacaId
                 )
                 continue
             if caseNumber == 0:
                 return
+
+    def withdrawFee(self):
+        url = f"{BASE_URL}/withdrawFee"
+        response = self.post_data(url, self.payload_address)
+        if response["code"] != "SUCCESS":
+            print("withdrawFee: " + response["message"])
+            return
+        else:
+            return response["data"]
+
+    def setupPassword(self):
+        password = int(input("Please input your 6-digits PIN\n"))
+        payload = {
+            "address": self.address,
+            "password": password,
+        }
+        url = f"{BASE_URL}/owner-setting/verifyPassWord/setup"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("Setup passWord: " + response["message"])
+            return
+        else:
+            return response["code"]
+
+    def changePassword(self):
+        oldPassword = int(input("Please input your oldPassword 6-digits PIN:\n"))
+        newPassword = int(input("Please input your newPassword 6-digits PIN:\n"))
+        payload = {
+            "address": self.address,
+            "oldPassword": oldPassword,
+            "newPassword": newPassword,
+        }
+        url = f"{BASE_URL}/owner-setting/verifyPassWord/edit"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("Change passWord: " + response["message"])
+            return
+        else:
+            return response["code"]
+
+    def verifyPassWord(self, password):
+        payload = {
+            "address": self.address,
+            "password": password,
+        }
+        url = f"{BASE_URL}/owner-setting/verifyPassWord"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("verifyPassWord: " + response["message"] + "\n")
+            return response["code"]
+        else:
+            return response["code"]
+
+    def transferOutBySymbol(self, num, fee):
+        receiveRACA = num - fee
+        payload = {
+            "address": self.address,
+            "type": 5,
+            "tokenIds": "",
+            "num": num,
+            "rartity": 0,
+        }
+        url = f"{BASE_URL}/transferOutBySymbol"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("withdraw: " + response["message"])
+        else:
+            print(f"{receiveRACA} RACA will be received, please check your wallet")
+
+    def withdrawRACA(self):
+        withdrawFee = self.withdrawFee()
+        fee = int(withdrawFee["fee"])
+        limit = int(withdrawFee["limit"])
+        minVal = int(withdrawFee["minVal"])
+        print(f"withdraw fee is {fee} u-RACA")
+        print(f"{minVal} u-RACA <= | You can withdraw | <= {limit} u-RACA")
+        password = int(input("Please fill your 6-digits PIN:\n"))
+        isVerifyPassword = self.verifyPassWord(password)
+        while 1 != 0:
+            if isVerifyPassword != "SUCCESS":
+                password = int(input("Please fill your 6-digits PIN again:\n"))
+                isVerifyPassword = self.verifyPassWord(password)
+                continue
+            else:
+                break
+
+        if isVerifyPassword == "SUCCESS":
+            numberRaca = int(
+                input("Please fill your number RACA you want to withdraw:\n")
+            )
+            while 1 != 0:
+                if numberRaca < minVal or numberRaca > limit:
+                    numberRaca = int(
+                        input("Your number is exceed, please fill again:\n")
+                    )
+                    continue
+                else:
+                    self.transferOutBySymbol(numberRaca, fee)
+                    return

@@ -63,7 +63,7 @@ class MetamonPlayer:
         url = f"{BASE_URL}/login"
         response = self.post_data(url, self.payload_login)
         if response["code"] != "SUCCESS":
-            print("Can't get accessToken")
+            print("login: " + response["message"])
             exit()
         else:
             self.accessToken = response["data"]["accessToken"]
@@ -75,7 +75,7 @@ class MetamonPlayer:
         url = f"{BASE_URL}/owner-setting/email/sendLoginCode"
         response = self.post_data(url, self.payload_address)
         if response["code"] != "SUCCESS":
-            print("Can't send login code to email")
+            print("sendLoginCode: " + response["message"])
             exit()
         else:
             print("Code is sending to your email. Kindly check")
@@ -84,6 +84,9 @@ class MetamonPlayer:
         payload = {"address": self.address, "code": loginCode}
         url = f"{BASE_URL}/owner-setting/email/verifyLoginCode"
         response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("verifyLoginCode: " + response["message"])
+            return
         return response["code"]
 
     def initAccessToken(self):
@@ -94,7 +97,6 @@ class MetamonPlayer:
             print("Please fill your code:")
             code = self.verifyLoginCode(loginCode=input())
             if code != "SUCCESS":
-                print("Login code is not correct")
                 continue
             else:
                 print("Email is verified")
@@ -143,6 +145,7 @@ def marketGame(accessToken):
     4. Canceling
     5. Buy item in drops
     6. Transaction history
+    7. Withdraw
     0. Exit
     Please select you want to choose
     """
@@ -184,6 +187,8 @@ def marketGame(accessToken):
             mtm.buyDrops()
         if caseNumber == 6:
             mtm.transactionHistory()
+        if caseNumber == 7:
+            mtm.withdrawRACA()
         if caseNumber == 0:
             return
 
