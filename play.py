@@ -75,10 +75,14 @@ class MetamonPlayer:
 
     def showAllMetamons(self):
         """! Show off all metamons"""
+        metamonList = []
         ## Init metamons of Island via getMetamonsAtIsland()
         metamonsAtIsland = self.getMetamonsAtIsland()
         ## Init metamons of Lost world via getMetamonsAtLostWorld()
         metamonsAtLostWorld = self.getMetamonsAtLostWorld()
+        ## Init all metamons
+        metamonList = metamonList + metamonsAtLostWorld
+        metamonList = metamonList + metamonsAtIsland
         ## Creata a table with these field names
         table = PrettyTable()
         table.field_names = [
@@ -109,8 +113,8 @@ class MetamonPlayer:
         table.align["HI"] = "r"
         table.align["Position"] = "l"
         table.align["Race"] = "l"
-        ## Loop in each metamon of lost world, add them to these field names
-        for metamon in metamonsAtLostWorld:
+        ## Loop in each metamon of list, add them to these field names
+        for metamon in metamonList:
             table.add_row(
                 [
                     metamon["tokenId"],
@@ -125,26 +129,6 @@ class MetamonPlayer:
                     metamon["inv"],
                     metamon["healthy"],
                     "Lost world",
-                    metamon["race"],
-                    metamon["kingdomUnLockDate"],
-                ]
-            )
-        ## Loop in each metamon of island, add them to these field names
-        for metamon in metamonsAtIsland:
-            table.add_row(
-                [
-                    metamon["tokenId"],
-                    metamon["rarity"],
-                    metamon["level"],
-                    metamon["sca"],
-                    metamon["exp"],
-                    metamon["luk"],
-                    metamon["crg"],
-                    metamon["inte"],
-                    metamon["con"],
-                    metamon["inv"],
-                    metamon["healthy"],
-                    "Island",
                     metamon["race"],
                     metamon["kingdomUnLockDate"],
                 ]
@@ -170,7 +154,7 @@ class MetamonPlayer:
         ## Get data from API via POST method
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
-            print("addAttrNeedAsset: " + response["message"])
+            print(attrType[type] + ": " + response["message"])
             return
         return response["code"]
 
@@ -193,10 +177,14 @@ class MetamonPlayer:
             print("addAttr: " + response["message"])
             return
         else:
-            ## The upper number of data
             upperNum = response["data"]["upperNum"]
-            ## Show the metamon is updated
-            print(f"{metamonId} up {attrType[type]} is {upperNum}")
+            title = response["data"]["title"]
+            upperMsg = response["data"]["upperMsg"]
+            sca = int(response["data"]["sca"])
+            upperSca = int(response["data"]["upperSca"])
+            print(f"{title}: {upperMsg}")
+            if sca != upperSca:
+                print(f"{sca} + {upperNum} --> {upperSca}")
 
     def resetMonster(self, metamonId):
         """! Reset exp of the metamon lv 60 when she travel to island
@@ -267,6 +255,47 @@ class MetamonPlayer:
             return
         return response["code"]
 
+    def autoAddAttrAllMetamon(self):
+        metamonList = []
+        metamonsAtIsland = self.getMetamonsAtIsland()
+        metamonsAtLostWorld = self.getMetamonsAtLostWorld()
+        metamonList = metamonList + metamonsAtIsland
+        metamonList = metamonList + metamonsAtLostWorld
+        print("\nAdd attr follow Luck > Courage > Stealth > Wisdom > Size")
+        for metamon in metamonList:
+            print("\n" + metamon["tokenId"])
+            time.sleep(5)
+            if metamon["luk"] != metamon["lukMax"]:
+                if self.addAttrNeedAsset(metamon["id"], "1") != "SUCCESS":
+                    continue
+                else:
+                    self.addAttr(metamon["id"], "1")
+                    continue
+            if metamon["crg"] != metamon["crgMax"]:
+                if self.addAttrNeedAsset(metamon["id"], "2") != "SUCCESS":
+                    continue
+                else:
+                    self.addAttr(metamon["id"], "2")
+                    continue
+            if metamon["inv"] != metamon["invMax"]:
+                if self.addAttrNeedAsset(metamon["id"], "5") != "SUCCESS":
+                    continue
+                else:
+                    self.addAttr(metamon["id"], "5")
+                    continue
+            if metamon["inte"] != metamon["inteMax"]:
+                if self.addAttrNeedAsset(metamon["id"], "3") != "SUCCESS":
+                    continue
+                else:
+                    self.addAttr(metamon["id"], "3")
+                    continue
+            if metamon["con"] != metamon["conMax"]:
+                if self.addAttrNeedAsset(metamon["id"], "4") != "SUCCESS":
+                    continue
+                else:
+                    self.addAttr(metamon["id"], "4")
+                    continue
+
     def addAttrAllMetamon(self):
         """! Add attribute for all metamons"""
         helloContent = """
@@ -279,18 +308,17 @@ class MetamonPlayer:
         """
         ## Get all metamons from Island and Lost world via
         ## method getMetamonsAtIsland and getMetamonsAtLostWorld
+        metamonList = []
         metamonsAtIsland = self.getMetamonsAtIsland()
         metamonsAtLostWorld = self.getMetamonsAtLostWorld()
+        metamonList = metamonList + metamonsAtIsland
+        metamonList = metamonList + metamonsAtLostWorld
         caseNumber = input(helloContent)
         ## Loop through all metamons, first check ability to add attribute
         ## of the memontamon, if it is "SUCCESS", do add attribute to the metamon
         metamonNumbers = 0
-        for metamon in metamonsAtIsland:
-            if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
-                self.addAttr(metamon["id"], caseNumber)
-                metamonNumbers += 1
-            time.sleep(5)
-        for metamon in metamonsAtLostWorld:
+        for metamon in metamonList:
+            print("\n" + metamon["tokenId"])
             if self.addAttrNeedAsset(metamon["id"], caseNumber) == "SUCCESS":
                 self.addAttr(metamon["id"], caseNumber)
                 metamonNumbers += 1

@@ -373,6 +373,7 @@ class MetamonPlayer:
         response = self.post_data(url, self.payload_address)
         if response["code"] != "SUCCESS":
             print("buy: " + response["message"])
+            return response["code"]
         else:
             print("Buy items successfully")
 
@@ -388,11 +389,13 @@ class MetamonPlayer:
         numberToBuy = int(input("How much do you want to buy?\n"))
         if caseNumber == 1:
             for i in range(numberToBuy):
-                self.buyItemInDrops(111)
+                if self.buyItemInDrops(111) != "SUCCESS":
+                    return
             return
         if caseNumber == 2:
             for i in range(numberToBuy):
-                self.buyItemInDrops(106)
+                if self.buyItemInDrops(106) != "SUCCESS":
+                    return
             return
         if caseNumber == 0:
             return

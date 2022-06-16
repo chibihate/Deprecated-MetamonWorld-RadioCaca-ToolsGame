@@ -116,6 +116,12 @@ def playGame(accessToken):
     0. Exit
     Please select you want to choose
     """
+    addAttrContent = """
+    1. Manual
+    2. Automatic
+    0. Exit
+    Please select you want to choose
+    """
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
@@ -125,7 +131,13 @@ def playGame(accessToken):
         if caseNumber == 3:
             mtm.showAllMetamons()
         if caseNumber == 4:
-            mtm.addAttrAllMetamon()
+            caseNumber = int(input(addAttrContent))
+            if caseNumber == 1:
+                mtm.addAttrAllMetamon()
+            if caseNumber == 2:
+                mtm.autoAddAttrAllMetamon()
+            if caseNumber == 0:
+                continue
         if caseNumber == 5:
             mtm.joinTheBestSquad()
         if caseNumber == 6:
