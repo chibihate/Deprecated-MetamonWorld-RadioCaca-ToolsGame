@@ -373,9 +373,9 @@ class MetamonPlayer:
         response = self.post_data(url, self.payload_address)
         if response["code"] != "SUCCESS":
             print("buy: " + response["message"])
-            return response["code"]
         else:
             print("Buy items successfully")
+        return response["code"]
 
     def buyDrops(self):
         helloContent = """
