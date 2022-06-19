@@ -97,10 +97,28 @@ def playGame(accessToken):
     0. Exit
     Please select you want to choose
     """
+    battleContent = """
+    1. Auto select the lowest scare
+    2. Quick battle object - 883061
+    3. Quick battle object - 442383
+    4. Quick battle object - 214650
+    0. Exit
+    Please select you want to choose
+    """
     while 1 != 0:
         caseNumber = int(input(helloContent))
         if caseNumber == 1:
-            mtm.startBattleIsland()
+            caseNumber = int(input(battleContent))
+            if caseNumber == 1:
+                mtm.startBattleIsland(1)
+            if caseNumber == 2:
+                mtm.startBattleIsland(2)
+            if caseNumber == 3:
+                mtm.startBattleIsland(3)
+            if caseNumber == 4:
+                mtm.startBattleIsland(4)
+            if caseNumber == 0:
+                continue
         if caseNumber == 2:
             mtm.mintEgg()
         if caseNumber == 3:

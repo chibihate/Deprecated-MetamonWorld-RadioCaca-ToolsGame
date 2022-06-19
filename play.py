@@ -266,30 +266,35 @@ class MetamonPlayer:
             print("\n" + metamon["tokenId"])
             time.sleep(5)
             if metamon["luk"] != metamon["lukMax"]:
+                print("\n Luck")
                 if self.addAttrNeedAsset(metamon["id"], "1") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "1")
                     continue
             if metamon["crg"] != metamon["crgMax"]:
+                print("\n Courage")
                 if self.addAttrNeedAsset(metamon["id"], "2") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "2")
                     continue
             if metamon["inv"] != metamon["invMax"]:
+                print("\n Stealth")
                 if self.addAttrNeedAsset(metamon["id"], "5") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "5")
                     continue
             if metamon["inte"] != metamon["inteMax"]:
+                print("\n Wisdom")
                 if self.addAttrNeedAsset(metamon["id"], "3") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "3")
                     continue
             if metamon["con"] != metamon["conMax"]:
+                print("\n Size")
                 if self.addAttrNeedAsset(metamon["id"], "4") != "SUCCESS":
                     continue
                 else:
@@ -354,7 +359,7 @@ class MetamonPlayer:
         """
         ## Init the maximum score
         scareScore = 650
-        ## Get battel objects via method getBattelObjects
+        ## Get battle objects via method getBattelObjects
         battelObjects = self.getBattelObjects(metamonId, level)
         ## Loop through battle objects, find the metamon with minimum "sca"
         for battleObject in battelObjects:
@@ -424,9 +429,12 @@ class MetamonPlayer:
             hi += 10
         return level, exp, hi
 
-    def startBattleIsland(self):
+    def startBattleIsland(self, mode):
         metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
+            tear = int(metamon["tear"])
+            if tear == 0:
+                continue
             self.status = True
             tokenId = metamon["tokenId"]
             id = metamon["id"]
@@ -434,17 +442,27 @@ class MetamonPlayer:
             exp = int(metamon["exp"])
             expMax = int(metamon["expMax"])
             hi = int(metamon["healthy"])
-            tear = int(metamon["tear"])
             print(
                 f"Start {tokenId} with level:{level}, exp:{exp}, HI:{hi} and {tear} turns"
             )
             # Check ability of metamon before start battle
             level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
             # Get the mininum score scare object battle
-            (
-                minScareBattleObjectAllLevel,
-                levelBattleObject,
-            ) = self.getMinScareBattleObjectAllLevel(id, level)
+            if mode == 1:
+                (
+                    minScareBattleObjectAllLevel,
+                    levelBattleObject,
+                ) = self.getMinScareBattleObjectAllLevel(id, level)
+            elif mode == 2:
+                levelBattleObject = "1"
+                minScareBattleObjectAllLevel = "883061"
+            elif mode == 3:
+                levelBattleObject = "1"
+                minScareBattleObjectAllLevel = "442383"
+            else:
+                levelBattleObject = "1"
+                minScareBattleObjectAllLevel = "214650"
+
             for i in range(tear):
                 # Update ability of metamon
                 level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
