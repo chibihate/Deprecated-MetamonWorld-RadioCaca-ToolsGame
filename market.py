@@ -3,6 +3,7 @@ from prettytable import PrettyTable
 import time
 import json
 
+exceptNumber = [-1, 0, 1, 5, 12, 13, 14, 1018, 1019, 1020]
 typeItems = {
     -1: "All",
     0: "Metamon",
@@ -30,7 +31,35 @@ typeItems = {
     1019: "Mansion",
     1020: "Castle",
 }
-
+exceptDropItems = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    1004,
+    1007,
+    1008,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    -1,
+]
+dropItems = {
+    "Purple Potion": 111,
+    "Anti-Fatigue Potion": 106,
+    "N Stimulant": 108,
+    "R Stimulant": 109,
+    "SR Stimulant": 110,
+}
 orderTypes = {
     2: "LowestPrice",
     -2: "HighestPrice",
@@ -100,6 +129,11 @@ class MetamonPlayer:
     def post_data(self, url, payload):
         return json.loads(
             requests.Session().post(url, data=payload, headers=self.headers).text
+        )
+
+    def get_data(self, url, payload):
+        return json.loads(
+            requests.Session().get(url, data=payload, headers=self.headers).text
         )
 
     def checkBag(self):
@@ -193,8 +227,72 @@ class MetamonPlayer:
 
     def buyItem(self, orderId):
         payload = {"address": self.address, "orderId": orderId}
-
         url = f"{BASE_URL}/shop-order/buy"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("buy: " + response["message"])
+        else:
+            print("Buy items successfully")
+
+    def tranAvgPrice(self, typeItem):
+        payload = {"address": self.address, "type": typeItem}
+        url = f"{BASE_URL}/shop-order/tranAvgPrice"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("tranAvgPrice: " + response["message"])
+            return 0
+        else:
+            return response["data"]["tranSellPrice"]
+
+    def screenOrder(self, typeItem, quantity, minAmount, maxAmount):
+        payload = {
+            "address": self.address,
+            "type": typeItem,
+            "quantity": quantity,
+            "minAmount": minAmount,
+            "maxAmount": maxAmount,
+        }
+        url = f"{BASE_URL}/shop-order-quick/screen"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("screen: " + response["message"])
+            return 0
+        else:
+            return response["data"]["id"]
+
+    def buyOrder(self):
+        typeItem = tableSelect(typeItems, exceptNumber)
+        minPrice = int(self.tranAvgPrice(typeItem))
+        if minPrice == 0:
+            return
+        print(f"Max price >= {minPrice}")
+        while 1 != 0:
+            maxAmount = int(input("Please fill max price:\n"))
+            if maxAmount < minPrice:
+                print("Please fill again !!!\n")
+                continue
+            else:
+                break
+        print(f"Min price <= {maxAmount}")
+        while 1 != 0:
+            minAmount = int(input("Please fill min price:\n"))
+            if minAmount > maxAmount:
+                print("Please fill again !!!\n")
+                continue
+            else:
+                break
+        while 1 != 0:
+            quantity = int(input("Please fill quantity:\n"))
+            if quantity <= 0:
+                print("Please fill again !!!\n")
+                continue
+            else:
+                break
+        orderId = self.screenOrder(typeItem, quantity, minAmount, maxAmount)
+        if orderId == 0:
+            return
+        payload = {"address": self.address, "orderId": orderId}
+        url = f"{BASE_URL}/shop-order-quick/buy"
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("buy: " + response["message"])
@@ -217,7 +315,6 @@ class MetamonPlayer:
             print("Shell items successfully")
 
     def shopping(self):
-        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
         typeItem = tableSelect(typeItems, exceptNumber)
         orderType = tableSelect(orderTypes)
         self.orderId = -1
@@ -249,7 +346,6 @@ class MetamonPlayer:
                 return
 
     def shoppingWithSetPrice(self):
-        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
         typeItem = tableSelect(typeItems, exceptNumber)
         orderType = tableSelect(orderTypes)
         self.getPriceInMarket(typeItem, orderType, -1, "", 15)
@@ -280,7 +376,6 @@ class MetamonPlayer:
             time.sleep(5)
 
     def shelling(self, type):
-        exceptNumber = [-1, 0, 1, 5, 9, 1018, 1019, 1020]
         typeItem = tableSelect(typeItems, exceptNumber)
         if type == 1:
             orderType = 3
@@ -369,37 +464,52 @@ class MetamonPlayer:
             else:
                 return
 
-    def buyItemInDrops(self, orderId):
-        url = f"{BASE_URL}/official-sale/buy?orderId={orderId}"
-        response = self.post_data(url, self.payload_address)
+    def buyItemInDrops(self, orderId, num):
+        payload = {"address": self.address, "orderId": orderId, "num": num}
+        url = f"{BASE_URL}/official-sale/buy"
+        response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":
             print("buy: " + response["message"])
         else:
             print("Buy items successfully")
-        return response["code"]
+
+    def listDrops(self):
+        payload = {"address": self.address, "pageSize": 50, "orderId": -1}
+        url = f"{BASE_URL}/official-sale/list?address={self.address}&pageSize=50&orderId=-1"
+        response = self.get_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("list: " + response["message"])
+            return []
+        else:
+            return response["data"]["list"]
 
     def buyDrops(self):
-        helloContent = """
-        Official sale 
-        1. Purple Potion         - 111
-        2. Anti-Fatigue Potion   - 106
-        0. Exit
-        Please select you want to buy it
-        """
-        caseNumber = int(input(helloContent))
-        numberToBuy = int(input("How much do you want to buy?\n"))
-        if caseNumber == 1:
-            for i in range(numberToBuy):
-                if self.buyItemInDrops(111) != "SUCCESS":
+        orderId = dropItems[typeItems[tableSelect(typeItems, exceptDropItems)]]
+        listDrops = self.listDrops()
+        if listDrops == []:
+            return
+        for item in listDrops:
+            if int(item["id"]) == int(orderId):
+                if item["buyerNum"] == item["maxNum"] and item["maxNum"] != None:
+                    print("Reach to maximum buy today")
                     return
-            return
-        if caseNumber == 2:
-            for i in range(numberToBuy):
-                if self.buyItemInDrops(106) != "SUCCESS":
-                    return
-            return
-        if caseNumber == 0:
-            return
+                if item["maxNum"] != None:
+                    if int(item["maxNum"]) <= int(item["limitNum"]):
+                        maxQuantity = int(item["maxNum"])
+                    else:
+                        maxQuantity = int(item["limitNum"])
+                else:
+                    maxQuantity = int(item["limitNum"])
+                print(f"Maximum quantity: {maxQuantity}\n")
+                while 1 != 0:
+                    quantity = int(input("Please fill quantity:\n"))
+                    if quantity <= 0 and quantity > maxQuantity:
+                        print("Please fill again !!!\n")
+                        continue
+                    else:
+                        break
+
+        self.buyItemInDrops(orderId, quantity)
 
     def getNftRecord(self, typeItem, dealType, bpNftId=-1, bpOtherId=-1, bpRacaId=-1):
         payload = {

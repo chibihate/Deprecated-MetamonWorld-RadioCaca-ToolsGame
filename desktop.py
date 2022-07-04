@@ -188,6 +188,7 @@ def marketGame(accessToken):
     shoppingContent = """
     1. Manual
     2. Automatic
+    3. Order
     0. Exit
     Please select you want to choose
     """
@@ -208,6 +209,9 @@ def marketGame(accessToken):
                 continue
             if caseNumber == 2:
                 mtm.shoppingWithSetPrice()
+                continue
+            if caseNumber == 3:
+                mtm.buyOrder()
                 continue
             if caseNumber == 0:
                 continue
