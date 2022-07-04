@@ -136,12 +136,16 @@ def playGame(accessToken):
             caseNumber = int(input(battleContent))
             if caseNumber == 1:
                 mtm.startBattleIsland(1)
+                continue
             if caseNumber == 2:
                 mtm.startBattleIsland(2)
+                continue
             if caseNumber == 3:
                 mtm.startBattleIsland(3)
+                continue
             if caseNumber == 4:
                 mtm.startBattleIsland(4)
+                continue
             if caseNumber == 0:
                 continue
         if caseNumber == 2:
@@ -152,8 +156,10 @@ def playGame(accessToken):
             caseNumber = int(input(addAttrContent))
             if caseNumber == 1:
                 mtm.addAttrAllMetamon()
+                continue
             if caseNumber == 2:
                 mtm.autoAddAttrAllMetamon()
+                continue
             if caseNumber == 0:
                 continue
         if caseNumber == 5:
@@ -199,16 +205,20 @@ def marketGame(accessToken):
             caseNumber = int(input(shoppingContent))
             if caseNumber == 1:
                 mtm.shopping()
+                continue
             if caseNumber == 2:
                 mtm.shoppingWithSetPrice()
+                continue
             if caseNumber == 0:
                 continue
         if caseNumber == 3:
             caseNumber = int(input(shellingContent))
             if caseNumber == 1:
                 mtm.shelling(caseNumber)
+                continue
             if caseNumber == 2:
                 mtm.shelling(caseNumber)
+                continue
             if caseNumber == 0:
                 continue
         if caseNumber == 4:

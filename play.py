@@ -38,10 +38,15 @@ class MetamonPlayer:
         self.status = True
         self.payload_address = {"address": self.address}
 
-    def post_data(self, url, payload):
-        return json.loads(
-            requests.Session().post(url, data=payload, headers=self.headers).text
-        )
+    def post_data(self, url, payload, isData=True):
+        if isData != True:
+            return json.loads(
+                requests.Session().post(url, json=payload, headers=self.headers).text
+            )
+        else:
+            return json.loads(
+                requests.Session().post(url, data=payload, headers=self.headers).text
+            )
 
     def getMetamonsAtIsland(self):
         """! Get list of metamon at island
@@ -97,7 +102,6 @@ class MetamonPlayer:
             "Size",
             "Steal",
             "HI",
-            "Position",
             "Race",
             "Unlock Date",
         ]
@@ -111,7 +115,6 @@ class MetamonPlayer:
         table.align["Size"] = "r"
         table.align["Steal"] = "r"
         table.align["HI"] = "r"
-        table.align["Position"] = "l"
         table.align["Race"] = "l"
         ## Loop in each metamon of list, add them to these field names
         for metamon in metamonList:
@@ -128,7 +131,6 @@ class MetamonPlayer:
                     metamon["con"],
                     metamon["inv"],
                     metamon["healthy"],
-                    "Lost world",
                     metamon["race"],
                     metamon["kingdomUnLockDate"],
                 ]
@@ -266,35 +268,35 @@ class MetamonPlayer:
             print("\n" + metamon["tokenId"])
             time.sleep(5)
             if metamon["luk"] != metamon["lukMax"]:
-                print("\n Luck")
+                print("Luck")
                 if self.addAttrNeedAsset(metamon["id"], "1") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "1")
                     continue
             if metamon["crg"] != metamon["crgMax"]:
-                print("\n Courage")
+                print("Courage")
                 if self.addAttrNeedAsset(metamon["id"], "2") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "2")
                     continue
             if metamon["inv"] != metamon["invMax"]:
-                print("\n Stealth")
+                print("Stealth")
                 if self.addAttrNeedAsset(metamon["id"], "5") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "5")
                     continue
             if metamon["inte"] != metamon["inteMax"]:
-                print("\n Wisdom")
+                print("Wisdom")
                 if self.addAttrNeedAsset(metamon["id"], "3") != "SUCCESS":
                     continue
                 else:
                     self.addAttr(metamon["id"], "3")
                     continue
             if metamon["con"] != metamon["conMax"]:
-                print("\n Size")
+                print("Size")
                 if self.addAttrNeedAsset(metamon["id"], "4") != "SUCCESS":
                     continue
                 else:
@@ -550,16 +552,13 @@ class MetamonPlayer:
         sca = 650
         for metamon in metamons:
             if str(metamon["kingdomLock"]).lower() == "false":
-                nftId = '{nftId: "' + str(metamon["id"]) + '"}'
-                metamonsList.append(nftId)
+                metamonsList.append({"nftId": metamon["id"]})
                 if int(metamon["sca"]) < sca:
                     sca = int(metamon["sca"])
         return metamonsList, sca
 
-    def joinLostWorldManual(self, metamonsList, sca):
-        print(f"We have {len(metamonsList)} metamons are available")
-        metamons = ", ".join(metamonsList)
-
+    def joinLostWorldManual(self, metamons, sca):
+        print(f"We have {len(metamons)} metamons are available")
         while 1 != 0:
             idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
             caseNumber = int(
@@ -576,11 +575,9 @@ class MetamonPlayer:
                 return
 
     def joinLostWorldAutomatic(
-        self, _scoreAverage=650, _monsterNum=900, metamonsList=[], sca=650
+        self, _scoreAverage=650, _monsterNum=900, metamons=[], sca=650
     ):
-        print(f"We have {len(metamonsList)} metamons are available")
-        metamons = ", ".join(metamonsList)
-
+        print(f"We have {len(metamons)} metamons are available")
         while 1 != 0:
             idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
 
@@ -598,14 +595,13 @@ class MetamonPlayer:
     def teamJoin(self, teamId, metamons):
         payload = {
             "address": self.address,
-            "teamId": str(teamId),
-            "metamons": f"[{metamons}]",
+            "teamId": teamId,
+            "metamons": metamons,
         }
-        url = f"{BASE_URL}/kingdom/teamJoin"
-        response = self.post_data(url, payload)
+        url = f"{BASE_URL}/kingdom/teamJoin?address={self.address}"
+        response = self.post_data(url, payload, False)
         if response["code"] != "SUCCESS":
             print("teamJoin: " + response["message"])
-        print(response)
 
     def joinTheBestSquad(self):
         joinSquadContent = """
@@ -613,8 +609,8 @@ class MetamonPlayer:
         2. Automatic
         Please select you want to choose
         """
-        metamonsList, sca = self.getMetamonIsReadyInKingdom()
-        if metamonsList == []:
+        metamons, sca = self.getMetamonIsReadyInKingdom()
+        if metamons == []:
             print("No metamons are available")
             return
         caseNumber = int(input(joinSquadContent))
@@ -622,15 +618,15 @@ class MetamonPlayer:
             scoreAverage = int(input("Please enter your score average:\n"))
             monsterNum = int(input("Please enter your monster number:\n"))
         while 1 != 0:
-            metamonsList, sca = self.getMetamonIsReadyInKingdom()
-            if metamonsList == []:
+            metamons, sca = self.getMetamonIsReadyInKingdom()
+            if metamons == []:
                 print("No metamons are available")
                 return
             if caseNumber == 1:
-                self.joinLostWorldManual(metamonsList, sca)
+                self.joinLostWorldManual(metamons, sca)
                 continue
             if caseNumber == 2:
-                self.joinLostWorldAutomatic(scoreAverage, monsterNum, metamonsList, sca)
+                self.joinLostWorldAutomatic(scoreAverage, monsterNum, metamons, sca)
                 continue
 
     def battleRecord(self):

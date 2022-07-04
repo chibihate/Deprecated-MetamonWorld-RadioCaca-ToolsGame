@@ -207,6 +207,7 @@ class MetamonPlayer:
             "type": typeItem,
             "quantity": quantity,
             "amount": price,
+            "tokenId": "-1",
         }
         url = f"{BASE_URL}/shop-order/sell"
         response = self.post_data(url, payload)
