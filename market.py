@@ -31,34 +31,12 @@ typeItems = {
     1019: "Mansion",
     1020: "Castle",
 }
-exceptDropItems = [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    1004,
-    1007,
-    1008,
-    1015,
-    1016,
-    1017,
-    1018,
-    1019,
-    1020,
-    -1,
-]
 dropItems = {
-    "Purple Potion": 111,
-    "Anti-Fatigue Potion": 106,
-    "N Stimulant": 108,
-    "R Stimulant": 109,
-    "SR Stimulant": 110,
+    111: "Purple Potion",
+    106: "Anti-Fatigue Potion",
+    108: "N Stimulant",
+    109: "R Stimulant",
+    110: "SR Stimulant",
 }
 orderTypes = {
     2: "LowestPrice",
@@ -262,6 +240,7 @@ class MetamonPlayer:
 
     def buyOrder(self):
         typeItem = tableSelect(typeItems, exceptNumber)
+        self.getPriceInMarket(typeItem, 2, -1, "", 15)
         minPrice = int(self.tranAvgPrice(typeItem))
         if minPrice == 0:
             return
@@ -269,7 +248,7 @@ class MetamonPlayer:
         while 1 != 0:
             maxAmount = int(input("Please fill max price:\n"))
             if maxAmount < minPrice:
-                print("Please fill again !!!\n")
+                print("Please fill again !!!")
                 continue
             else:
                 break
@@ -277,19 +256,20 @@ class MetamonPlayer:
         while 1 != 0:
             minAmount = int(input("Please fill min price:\n"))
             if minAmount > maxAmount:
-                print("Please fill again !!!\n")
+                print("Please fill again !!!")
                 continue
             else:
                 break
         while 1 != 0:
             quantity = int(input("Please fill quantity:\n"))
             if quantity <= 0:
-                print("Please fill again !!!\n")
+                print("Please fill again !!!")
                 continue
             else:
                 break
         orderId = self.screenOrder(typeItem, quantity, minAmount, maxAmount)
-        if orderId == 0:
+        if orderId == 0 or orderId == None:
+            print("There are no eligible orders, please place a new order")
             return
         payload = {"address": self.address, "orderId": orderId}
         url = f"{BASE_URL}/shop-order-quick/buy"
@@ -484,32 +464,35 @@ class MetamonPlayer:
             return response["data"]["list"]
 
     def buyDrops(self):
-        orderId = dropItems[typeItems[tableSelect(typeItems, exceptDropItems)]]
+        orderId = tableSelect(dropItems)
         listDrops = self.listDrops()
         if listDrops == []:
             return
         for item in listDrops:
             if int(item["id"]) == int(orderId):
+                if item["buyerNum"] == None:
+                    buyerNum = 0
+                else:
+                    buyerNum = int(item["buyerNum"])
                 if item["buyerNum"] == item["maxNum"] and item["maxNum"] != None:
                     print("Reach to maximum buy today")
                     return
                 if item["maxNum"] != None:
                     if int(item["maxNum"]) <= int(item["limitNum"]):
-                        maxQuantity = int(item["maxNum"])
+                        maxQuantity = int(item["maxNum"]) - buyerNum
                     else:
-                        maxQuantity = int(item["limitNum"])
+                        maxQuantity = int(item["limitNum"]) - buyerNum
                 else:
-                    maxQuantity = int(item["limitNum"])
-                print(f"Maximum quantity: {maxQuantity}\n")
+                    maxQuantity = int(item["limitNum"]) - buyerNum
+                print(f"Maximum quantity: {maxQuantity}")
                 while 1 != 0:
                     quantity = int(input("Please fill quantity:\n"))
-                    if quantity <= 0 and quantity > maxQuantity:
-                        print("Please fill again !!!\n")
+                    if quantity <= 0 or quantity > maxQuantity:
+                        print("Please fill again !!!")
                         continue
                     else:
+                        self.buyItemInDrops(orderId, quantity)
                         break
-
-        self.buyItemInDrops(orderId, quantity)
 
     def getNftRecord(self, typeItem, dealType, bpNftId=-1, bpOtherId=-1, bpRacaId=-1):
         payload = {
