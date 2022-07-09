@@ -37,6 +37,11 @@ class MetamonPlayer:
         self.battleLose = 0
         self.status = True
         self.payload_address = {"address": self.address}
+        self.id = 0
+        self.level = 0
+        self.exp = 0
+        self.expMax = 0
+        self.hi = 0
 
     def post_data(self, url, payload, isData=True):
         if isData != True:
@@ -413,23 +418,22 @@ class MetamonPlayer:
             self.battleLose += 1
             return False
 
-    def checkAbility(self, id, level, exp, expMax, hi):
-        if level == 60 and exp >= 395:
-            self.resetMonster(id)
-            exp = 0
-        if level == 59 and exp == 600:
-            self.updateMonster(id)
-            level = 60
-            exp = 0
+    def checkAbility(self):
+        if self.level == 60 and self.exp >= 395:
+            self.resetMonster(self.id)
+            self.exp = 0
+        if self.level == 59 and self.exp == 600:
+            self.updateMonster(self.id)
+            self.level = 60
+            self.exp = 0
             self.status = False
-        if level != 59 and exp >= expMax:
-            self.updateMonster(id)
-            exp = 0
-            level += 1
-        if hi <= 90 and self.addFatigueNeedAsset(id) == "SUCCESS":
-            self.addHealthy(id)
-            hi += 10
-        return level, exp, hi
+        if self.level != 59 and self.exp >= self.expMax:
+            self.updateMonster(self.id)
+            self.exp = 0
+            self.level += 1
+        if self.hi <= 90 and self.addFatigueNeedAsset(self.id) == "SUCCESS":
+            self.addHealthy(self.id)
+            self.hi += 10
 
     def startBattleIsland(self, mode):
         metamonAtIslandList = self.getMetamonsAtIsland()
@@ -439,22 +443,22 @@ class MetamonPlayer:
                 continue
             self.status = True
             tokenId = metamon["tokenId"]
-            id = metamon["id"]
-            level = int(metamon["level"])
-            exp = int(metamon["exp"])
-            expMax = int(metamon["expMax"])
-            hi = int(metamon["healthy"])
+            self.id = metamon["id"]
+            self.level = int(metamon["level"])
+            self.exp = int(metamon["exp"])
+            self.expMax = int(metamon["expMax"])
+            self.hi = int(metamon["healthy"])
             print(
-                f"Start {tokenId} with level:{level}, exp:{exp}, HI:{hi} and {tear} turns"
+                f"Start {tokenId} with level:{self.level}, exp:{self.exp}, HI:{self.hi} and {tear} turns"
             )
             # Check ability of metamon before start battle
-            level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
+            self.checkAbility()
             # Get the mininum score scare object battle
             if mode == 1:
                 (
                     minScareBattleObjectAllLevel,
                     levelBattleObject,
-                ) = self.getMinScareBattleObjectAllLevel(id, level)
+                ) = self.getMinScareBattleObjectAllLevel(self.id, self.level)
             elif mode == 2:
                 levelBattleObject = "1"
                 minScareBattleObjectAllLevel = "883061"
@@ -467,16 +471,16 @@ class MetamonPlayer:
 
             for i in range(tear):
                 # Update ability of metamon
-                level, exp, hi = self.checkAbility(id, level, exp, expMax, hi)
+                self.checkAbility()
                 if self.status == False:  # This case for metamon lv 59 -> 60
                     break
                 statusBattle = self.battleIsland(
-                    id, minScareBattleObjectAllLevel, levelBattleObject
+                    self.id, minScareBattleObjectAllLevel, levelBattleObject
                 )
                 if statusBattle == True:
-                    exp += 5
+                    self.exp += 5
                 else:
-                    exp += 3
+                    self.exp += 3
             print(f"End {tokenId}")
             if self.status == False:  # This case for metamon lv 59 -> 60
                 continue
