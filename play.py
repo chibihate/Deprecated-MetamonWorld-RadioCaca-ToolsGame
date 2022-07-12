@@ -592,7 +592,7 @@ class MetamonPlayer:
             return
         print(f"Minted eggs are success")
 
-    def getScoreGroupInKingdom(self, thresholdSca):
+    def getScoreGroupInKingdom(self, thresholdSca, isDev=True):
         payload = {
             "address": self.address,
             "page": 1,
@@ -606,40 +606,43 @@ class MetamonPlayer:
             return
         squadList = response["data"]["list"]
         table = PrettyTable()
-        table.field_names = [
-            "Index",
-            "Group",
-            "Score",
-            "Mons",
-        ]
+        table.field_names = ["Index", "Group", "Score", "Mons", "Lock", "Rank"]
         table.align["Index"] = "r"
         table.align["Group"] = "l"
         table.align["Score"] = "r"
         table.align["Mons"] = "r"
+        table.align["Lock"] = "l"
+        table.align["Rank"] = "l"
         indexSquad = 0
         idSquadList = {}
         monSquadList = {}
         scaSquadList = {}
+        lockSquadList = {}
         for squad in squadList:
+            if isDev == True:
+                if squad["symbol"] != "":
+                    continue
             if (
                 int(squad["monsterNum"]) >= 100
-                and str(squad["lockTeam"]).lower() == "false"
                 and int(squad["monsterScaThreshold"]) <= thresholdSca
             ):
                 indexSquad += 1
                 idSquadList[indexSquad] = int(squad["id"])
                 monSquadList[indexSquad] = int(squad["monsterNum"])
                 scaSquadList[indexSquad] = int(squad["averageSca"])
+                lockSquadList[indexSquad] = squad["lockTeam"]
                 table.add_row(
                     [
                         indexSquad,
                         squad["name"],
                         squad["averageSca"],
                         squad["monsterNum"],
+                        squad["lockTeam"],
+                        squad["ranking"],
                     ]
                 )
         print(table)
-        return idSquadList, monSquadList, scaSquadList
+        return idSquadList, monSquadList, scaSquadList, lockSquadList
 
     def getMetamonIsReadyInKingdom(self):
         metamons = self.getMetamonsAtLostWorld()
@@ -652,10 +655,27 @@ class MetamonPlayer:
                     sca = int(metamon["sca"])
         return metamonsList, sca
 
-    def joinLostWorldManual(self, metamons, sca):
+    def checkPwd(self, teamId, invitationCode):
+        payload = {
+            "address": self.address,
+            "teamId": teamId,
+            "joinPassword": invitationCode,
+        }
+        url = f"{BASE_URL}/kingdom/checkPwd"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("checkPwd: " + response["message"])
+        return response["code"]
+
+    def joinLostWorldManual(self, metamons, sca, isDev=True):
         print(f"We have {len(metamons)} metamons are available")
         while 1 != 0:
-            idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
+            (
+                idSquadList,
+                monSquadList,
+                scaSquadList,
+                lockSquadList,
+            ) = self.getScoreGroupInKingdom(sca, isDev)
             caseNumber = int(
                 input(
                     f"Select number in range {len(idSquadList)} to join - 0 to refresh\n"
@@ -664,8 +684,16 @@ class MetamonPlayer:
             if caseNumber == 0:
                 continue
             elif caseNumber in range(len(idSquadList) + 1):
-                self.teamJoin(idSquadList[caseNumber], metamons)
-                continue
+                if lockSquadList[caseNumber] == False:
+                    self.teamJoin(idSquadList[caseNumber], metamons)
+                    continue
+                else:
+                    passToJoin = input("Please fill invitationCode:\n")
+                    code = self.checkPwd(idSquadList[caseNumber], passToJoin)
+                    if code != "SUCCESS":
+                        continue
+                    self.teamJoin(idSquadList[caseNumber], metamons, passToJoin)
+                    continue
             else:
                 return
 
@@ -674,7 +702,12 @@ class MetamonPlayer:
     ):
         print(f"We have {len(metamons)} metamons are available")
         while 1 != 0:
-            idSquadList, monSquadList, scaSquadList = self.getScoreGroupInKingdom(sca)
+            (
+                idSquadList,
+                monSquadList,
+                scaSquadList,
+                lockSquadList,
+            ) = self.getScoreGroupInKingdom(sca)
 
             for i in range(len(idSquadList)):
                 if (monSquadList[i + 1] >= _monsterNum) and (
@@ -687,12 +720,20 @@ class MetamonPlayer:
                     return
             time.sleep(10)
 
-    def teamJoin(self, teamId, metamons):
-        payload = {
-            "address": self.address,
-            "teamId": teamId,
-            "metamons": metamons,
-        }
+    def teamJoin(self, teamId, metamons, invitationCode=""):
+        if invitationCode == "":
+            payload = {
+                "address": self.address,
+                "teamId": teamId,
+                "metamons": metamons,
+            }
+        else:
+            payload = {
+                "address": self.address,
+                "teamId": teamId,
+                "metamons": metamons,
+                "joinPassword": invitationCode,
+            }
         url = f"{BASE_URL}/kingdom/teamJoin?address={self.address}"
         response = self.post_data(url, payload, False)
         if response["code"] != "SUCCESS":
@@ -700,8 +741,9 @@ class MetamonPlayer:
 
     def joinTheBestSquad(self):
         joinSquadContent = """
-        1. Manual
-        2. Automatic
+        1. Manual - Dev Legion
+        2. Manual - Not Dev Legion
+        3. Automatic
         Please select you want to choose
         """
         metamons, sca = self.getMetamonIsReadyInKingdom()
@@ -721,6 +763,9 @@ class MetamonPlayer:
                 self.joinLostWorldManual(metamons, sca)
                 continue
             if caseNumber == 2:
+                self.joinLostWorldManual(metamons, sca, False)
+                continue
+            if caseNumber == 3:
                 self.joinLostWorldAutomatic(scoreAverage, monsterNum, metamons, sca)
                 continue
 
