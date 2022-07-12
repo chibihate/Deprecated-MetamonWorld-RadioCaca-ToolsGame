@@ -42,6 +42,7 @@ class MetamonPlayer:
         self.exp = 0
         self.expMax = 0
         self.hi = 0
+        self.rarity = "N"
 
     def post_data(self, url, payload, isData=True):
         if isData != True:
@@ -398,7 +399,7 @@ class MetamonPlayer:
         print(f"Battle object has scare score {scareScore}")
         return minScareBattleObjectAllLevel, levelBattleObject
 
-    def battleIsland(self, myMonId, battleMonId, battleLevel):
+    def startBattle(self, myMonId, battleMonId, battleLevel):
         payload = {
             "address": self.address,
             "monsterA": myMonId,
@@ -418,24 +419,108 @@ class MetamonPlayer:
             self.battleLose += 1
             return False
 
+    def checkBag(self, itemBeChecked):
+        amountItemBeChecked = 0
+        urlCheckBag = f"{BASE_URL}/checkBag"
+        responseCheckBag = self.post_data(urlCheckBag, self.payload_address)
+        if responseCheckBag["code"] != "SUCCESS":
+            print("checkBag: " + responseCheckBag["message"])
+        itemsInCheckBag = responseCheckBag["data"]["item"]
+        for item in itemsInCheckBag:
+            if item["bpType"] == itemBeChecked:
+                amountItemBeChecked = int(item["bpNum"])
+        return amountItemBeChecked
+
+    def buyItemInDrops(self, orderId, num):
+        payload = {"address": self.address, "orderId": orderId, "num": num}
+        url = f"{BASE_URL}/official-sale/buy"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("buy: " + response["message"])
+        else:
+            print("Buy items successfully")
+        return response["code"]
+
+    def screenOrder(self, typeItem, quantity, minAmount, maxAmount):
+        payload = {
+            "address": self.address,
+            "type": typeItem,
+            "quantity": quantity,
+            "minAmount": minAmount,
+            "maxAmount": maxAmount,
+        }
+        url = f"{BASE_URL}/shop-order-quick/screen"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("screen: " + response["message"])
+            return 0
+        else:
+            return response["data"]["id"]
+
+    def buyQuickly(self, typeItem, quantity, minAmount, maxAmount):
+        orderId = self.screenOrder(typeItem, quantity, minAmount, maxAmount)
+        if orderId == 0 or orderId == None:
+            print("There are no eligible orders, please place a new order")
+            return
+        payload = {"address": self.address, "orderId": orderId}
+        url = f"{BASE_URL}/shop-order-quick/buy"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("buy: " + response["message"])
+        else:
+            print("Buy items successfully")
+
     def checkAbility(self):
         if self.level == 60 and self.exp >= 395:
+            potion = self.checkBag(2)
+            if potion == 0:
+                self.buyQuickly(2, 1, 1, 1000)
             self.resetMonster(self.id)
             self.exp = 0
         if self.level == 59 and self.exp == 600:
+            if self.rarity == "N":
+                itemNeedToBuy = self.checkBag(2)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(2, 1, 1, 1000)
+            if self.rarity == "R":
+                itemNeedToBuy = self.checkBag(3)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(3, 1, 1, 100000)
+            if self.rarity == "SR" or self.rarity == "SSR":
+                itemNeedToBuy = self.checkBag(4)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(4, 1, 1, 1000000)
             self.updateMonster(self.id)
             self.level = 60
             self.exp = 0
             self.status = False
         if self.level != 59 and self.exp >= self.expMax:
+            if self.rarity == "N":
+                itemNeedToBuy = self.checkBag(2)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(2, 1, 1, 1000)
+            if self.rarity == "R":
+                itemNeedToBuy = self.checkBag(3)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(3, 1, 1, 100000)
+            if self.rarity == "SR" or self.rarity == "SSR":
+                itemNeedToBuy = self.checkBag(4)
+                if itemNeedToBuy == 0:
+                    self.buyQuickly(4, 1, 1, 1000000)
             self.updateMonster(self.id)
             self.exp = 0
             self.level += 1
         if self.hi <= 90 and self.addFatigueNeedAsset(self.id) == "SUCCESS":
+            hiPotion = self.checkBag(11)
+            if hiPotion == 0:
+                code = self.buyItemInDrops(106, 1)
+                if code == "SUCCESS":
+                    return
+                self.buyQuickly(11, 1, 1, 10000)
             self.addHealthy(self.id)
             self.hi += 10
 
-    def startBattleIsland(self, mode):
+    def battleIsland(self, mode):
         metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
             tear = int(metamon["tear"])
@@ -448,6 +533,7 @@ class MetamonPlayer:
             self.exp = int(metamon["exp"])
             self.expMax = int(metamon["expMax"])
             self.hi = int(metamon["healthy"])
+            self.rarity = metamon["rarity"]
             print(
                 f"Start {tokenId} with level:{self.level}, exp:{self.exp}, HI:{self.hi} and {tear} turns"
             )
@@ -474,7 +560,7 @@ class MetamonPlayer:
                 self.checkAbility()
                 if self.status == False:  # This case for metamon lv 59 -> 60
                     break
-                statusBattle = self.battleIsland(
+                statusBattle = self.startBattle(
                     self.id, minScareBattleObjectAllLevel, levelBattleObject
                 )
                 if statusBattle == True:
@@ -484,6 +570,11 @@ class MetamonPlayer:
             print(f"End {tokenId}")
             if self.status == False:  # This case for metamon lv 59 -> 60
                 continue
+        time.sleep(5)
+
+    def startBattleIsland(self, mode):
+        for i in range(3):
+            self.battleIsland(mode)
         print(f"Total egg fragments: {self.fragmentNum}")
         print(f"Total win battle: {self.battleWin}")
         print(f"Total lose battel: {self.battleLose}")
@@ -634,7 +725,7 @@ class MetamonPlayer:
                 continue
 
     def battleRecord(self):
-        payload = {"address": self.address, "pageSize": 15, "battleId": -1}
+        payload = {"address": self.address, "pageSize": 10, "battleId": -1}
         url = f"{BASE_URL}/kingdom/battleRecord"
         response = self.post_data(url, payload)
         if response["code"] != "SUCCESS":

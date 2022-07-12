@@ -2,6 +2,7 @@ import requests
 from prettytable import PrettyTable
 import time
 import json
+import math
 
 exceptNumber = [-1, 0, 1, 5, 12, 13, 14, 1018, 1019, 1020]
 typeItems = {
@@ -114,6 +115,36 @@ class MetamonPlayer:
             requests.Session().get(url, data=payload, headers=self.headers).text
         )
 
+    def getMetamonsAtIsland(self):
+        """! Get list of metamon at island
+        @return List of metamon at island
+        """
+        ## Payload of API
+        payload = {"address": self.address, "orderType": "-1"}
+        ## Url of API
+        url = f"{BASE_URL}/getWalletPropertyList"
+        ## Get data from API via POST method
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("getWalletPropertyList: " + response["message"])
+            return
+        return response["data"]["metamonList"]
+
+    def getMetamonsAtLostWorld(self):
+        """! Get list of metamon at lost world
+        @return List of metamon at lost world
+        """
+        ## Payload of API
+        payload = {"address": self.address, "orderType": "2", "position": 2}
+        ## Url of API
+        url = f"{BASE_URL}/kingdom/monsterList"
+        ## Get data from API via POST method
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("monsterList: " + response["message"])
+            return
+        return response["data"]
+
     def checkBag(self):
         itemsInGame = {}
         urlCheckBag = f"{BASE_URL}/checkBag"
@@ -136,7 +167,7 @@ class MetamonPlayer:
         urlGetBpOther = f"{BASE_URL}/getBpOther"
         payload = {
             "address": self.address,
-            "pageSize": 20,
+            "pageSize": 50,
             "bpId": "-1",
             "bpRecordId": "-1",
         }
@@ -238,6 +269,19 @@ class MetamonPlayer:
         else:
             return response["data"]["id"]
 
+    def buyQuickly(self, typeItem, quantity, minAmount, maxAmount):
+        orderId = self.screenOrder(typeItem, quantity, minAmount, maxAmount)
+        if orderId == 0 or orderId == None:
+            print("There are no eligible orders, please place a new order")
+            return
+        payload = {"address": self.address, "orderId": orderId}
+        url = f"{BASE_URL}/shop-order-quick/buy"
+        response = self.post_data(url, payload)
+        if response["code"] != "SUCCESS":
+            print("buy: " + response["message"])
+        else:
+            print("Buy items successfully")
+
     def buyOrder(self):
         typeItem = tableSelect(typeItems, exceptNumber)
         self.getPriceInMarket(typeItem, 2, -1, "", 15)
@@ -267,17 +311,7 @@ class MetamonPlayer:
                 continue
             else:
                 break
-        orderId = self.screenOrder(typeItem, quantity, minAmount, maxAmount)
-        if orderId == 0 or orderId == None:
-            print("There are no eligible orders, please place a new order")
-            return
-        payload = {"address": self.address, "orderId": orderId}
-        url = f"{BASE_URL}/shop-order-quick/buy"
-        response = self.post_data(url, payload)
-        if response["code"] != "SUCCESS":
-            print("buy: " + response["message"])
-        else:
-            print("Buy items successfully")
+        self.buyQuickly(typeItem, quantity, minAmount, maxAmount)
 
     def shellItem(self, typeItem, quantity, price):
         payload = {
@@ -293,6 +327,7 @@ class MetamonPlayer:
             print("sell: " + response["message"])
         else:
             print("Shell items successfully")
+        return response["code"]
 
     def shopping(self):
         typeItem = tableSelect(typeItems, exceptNumber)
@@ -452,6 +487,7 @@ class MetamonPlayer:
             print("buy: " + response["message"])
         else:
             print("Buy items successfully")
+        return response["code"]
 
     def listDrops(self):
         payload = {"address": self.address, "pageSize": 50, "orderId": -1}
@@ -654,3 +690,78 @@ class MetamonPlayer:
                 else:
                     self.transferOutBySymbol(numberRaca, fee)
                     return
+
+    def calculatingUpScore(self):
+        potionNeedToUpgrade = 0
+        metamonTotal = 0
+        metamonOnIsland = 0
+        metamonOnLostWorld = 0
+        listMetamonOnLostWorld = self.getMetamonsAtLostWorld()
+        listMetamonOnIsland = self.getMetamonsAtIsland()
+        if listMetamonOnIsland != []:
+            for mtm in listMetamonOnIsland:
+                if int(mtm["level"]) == 60:
+                    metamonOnIsland += 1
+                if int(mtm["sca"]) < 380:
+                    potionNeedToUpgrade += 1
+        print(f"Amount metamons lv 60 on island: {metamonOnIsland}")
+        if listMetamonOnLostWorld != []:
+            metamonOnLostWorld = int(len(listMetamonOnLostWorld))
+            for mtm in listMetamonOnLostWorld:
+                if int(mtm["sca"]) < 380:
+                    potionNeedToUpgrade += 1
+        print(f"Amount metamons on Lost world: {metamonOnLostWorld}")
+        print(f"Potion need to upgrade: {potionNeedToUpgrade}")
+
+        metamonTotal = metamonOnLostWorld + metamonOnIsland
+        print(f"Total amount metamons lv 60: {metamonTotal}")
+        potionPrice = int(self.getShopOrderList(2, 3)[0]["amount"])
+        print(f"Potion price: {potionPrice}")
+        pPotionPrice = int(self.getShopOrderList(10, 2)[0]["amount"])
+        purplePotionPrice = round(pPotionPrice * 98 / 100)
+        print(f"Purple potion after sale: {purplePotionPrice}")
+        feeOnLostWorld = metamonOnLostWorld * 200
+        print(f"Fee on Lost world: {feeOnLostWorld}")
+
+        potionInBag = 0
+        urlCheckBag = f"{BASE_URL}/checkBag"
+        responseCheckBag = self.post_data(urlCheckBag, self.payload_address)
+        if responseCheckBag["code"] != "SUCCESS":
+            print("checkBag: " + responseCheckBag["message"])
+        itemsInCheckBag = responseCheckBag["data"]["item"]
+        for item in itemsInCheckBag:
+            if item["bpType"] == 2:
+                potionInBag = int(item["bpNum"])
+        print(f"Potions in bag: {potionInBag}")
+        potionNeedToBuy = potionNeedToUpgrade - potionInBag
+        print(f"Potions need to buy: {potionNeedToBuy}")
+        feePotion = potionNeedToBuy * potionPrice
+        print(f"Fee for potion: {feePotion}")
+        totalSellPurplePotionPrice = metamonTotal * purplePotionPrice
+        print(
+            f"u-RACA received after selling purple potion: {totalSellPurplePotionPrice}"
+        )
+        purplePotionNeedToSell = metamonTotal - math.floor(
+            (totalSellPurplePotionPrice - feePotion - feeOnLostWorld)
+            / purplePotionPrice
+        )
+        print(f"Total purple potions need to sell: {purplePotionNeedToSell}")
+
+        caseNumber = int(input("1. Todo\n2. Exit\n"))
+        if caseNumber != 1:
+            return
+
+        print(f"Buy {metamonTotal} purple potions")
+        codeBuyPurplePotion = self.buyItemInDrops(111, metamonTotal)
+        if codeBuyPurplePotion != "SUCCESS":
+            return
+
+        print(f"Shell {purplePotionNeedToSell} purple potions")
+        codeShellPurplePotion = self.shellItem(
+            10, purplePotionNeedToSell, pPotionPrice - 1
+        )
+        if codeShellPurplePotion != "SUCCESS":
+            return
+
+        print(f"Buy {potionNeedToBuy} purple potions")
+        self.buyQuickly(2, potionNeedToBuy, 1, potionPrice * 2)

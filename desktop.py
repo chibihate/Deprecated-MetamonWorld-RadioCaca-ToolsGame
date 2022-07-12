@@ -182,6 +182,7 @@ def marketGame(accessToken):
     5. Buy item in drops
     6. Transaction history
     7. Withdraw
+    8. Calculating up score
     0. Exit
     Please select you want to choose
     """
@@ -233,6 +234,8 @@ def marketGame(accessToken):
             mtm.transactionHistory()
         if caseNumber == 7:
             mtm.withdrawRACA()
+        if caseNumber == 8:
+            mtm.calculatingUpScore()
         if caseNumber == 0:
             return
 
