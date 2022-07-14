@@ -289,7 +289,6 @@ class MetamonPlayer:
         table = PrettyTable()
         table.field_names = [
             "ID",
-            "Rare",
             "Lv",
             "Scare",
             "Luck",
@@ -299,7 +298,6 @@ class MetamonPlayer:
             "Steal",
         ]
         ## Align of these field names
-        table.align["Rare"] = "r"
         table.align["Lv"] = "r"
         table.align["Luck"] = "r"
         table.align["Cour"] = "r"
@@ -311,7 +309,6 @@ class MetamonPlayer:
             table.add_row(
                 [
                     metamon["tokenId"],
-                    metamon["rarity"],
                     metamon["level"],
                     metamon["sca"],
                     metamon["luk"],
