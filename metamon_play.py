@@ -12,8 +12,8 @@ ADDRESS_WALLET = os.getenv("ADDRESS_WALLET") or "your_ADDRESS_WALLET"
 SIGN_WALLET = os.getenv("SIGN_WALLET") or "your_SIGN_WALLET"
 MSG_WALLET = os.getenv("MSG_WALLET") or "your_MSG_WALLET"
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN") or ""
-HAVE_DOTENV = 0  # 0 if you don't use
-HAVE_2FA = 0  # 0 if you don't use
+HAVE_DOTENV = 1  # 0 if you don't use
+HAVE_2FA = 1  # 0 if you don't use
 
 # URLs to make api calls
 BASE_URL = "https://metamon-api.radiocaca.com/usm-api"
