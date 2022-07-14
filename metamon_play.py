@@ -495,6 +495,11 @@ class MetamonPlayer:
             self.autoAddAttrMetamon(metamon)
 
     def autoAddAttrMetamonAbove380(self):
+        purplePotion = self.checkOnlyBag(10)
+        loopCount = 0
+        if purplePotion == 0:
+            print("Out of purple potions")
+            return
         metamonsAtLostWorld = self.getMetamonsAtLostWorld()
         metamonList = {}
         self.showAllMetamons()
@@ -508,7 +513,12 @@ class MetamonPlayer:
                 continue
             else:
                 break
-        self.autoAddAttrMetamon(metamonList[number])
+        if purplePotion >= 5:
+            loopCount = 5
+        else:
+            loopCount = purplePotion
+        for i in range(loopCount):
+            self.autoAddAttrMetamon(metamonList[number])
 
     def addAttrAllMetamon(self):
         """! Add attribute for all metamons"""
