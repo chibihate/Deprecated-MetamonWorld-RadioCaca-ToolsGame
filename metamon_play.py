@@ -505,7 +505,6 @@ class MetamonPlayer:
         self.showAllMetamons()
         for metamon in metamonsAtLostWorld:
             metamonList[int(metamon["tokenId"])] = metamon
-        # print(metamonList)
         while 1 != 0:
             number = int(input("Please fill number ID metamon to add:\n"))
             if number not in metamonList.keys():
