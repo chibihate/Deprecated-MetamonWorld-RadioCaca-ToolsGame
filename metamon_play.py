@@ -1166,7 +1166,7 @@ class MetamonPlayer:
                 break
         self.buyQuickly(typeItem, quantity, minAmount, maxAmount)
 
-    def shellItem(self, typeItem, quantity, price):
+    def sellItem(self, typeItem, quantity, price):
         payload = {
             "address": self.address,
             "type": typeItem,
@@ -1179,7 +1179,7 @@ class MetamonPlayer:
         if response["code"] != "SUCCESS":
             print("sell: " + response["message"])
         else:
-            print("Shell items successfully")
+            print("Sell items successfully")
         return response["code"]
 
     def shopping(self):
@@ -1243,7 +1243,7 @@ class MetamonPlayer:
                     self.buyItem(orderId)
             time.sleep(5)
 
-    def shelling(self, type):
+    def selling(self, type):
         typeItem = tableSelect(typeItems, exceptNumber)
         if type == 1:
             orderType = 3
@@ -1256,15 +1256,15 @@ class MetamonPlayer:
             shopOrderList = self.getShopOrderList(typeItem, orderType)
             lowestPrice = int(shopOrderList[0]["amount"])
             print(f"The lowest price is {lowestPrice}")
-            caseNumber = int(input("1. Shell lowest\n2. Set the price\n"))
+            caseNumber = int(input("1. Sell lowest\n2. Set the price\n"))
             if caseNumber == 1:
                 lowestPrice -= 1
-                print(f"The lowest price will shell {lowestPrice}")
-                self.shellItem(typeItem, quantity, lowestPrice)
+                print(f"The lowest price will sell {lowestPrice}")
+                self.sellItem(typeItem, quantity, lowestPrice)
                 continue
             elif caseNumber == 2:
                 price = int(input("Insert your price\n"))
-                self.shellItem(typeItem, quantity, price)
+                self.sellItem(typeItem, quantity, price)
                 continue
             else:
                 return
@@ -1609,11 +1609,11 @@ class MetamonPlayer:
         if codeBuyPurplePotion != "SUCCESS":
             return
 
-        print(f"Shell {purplePotionNeedToSell} purple potions")
-        codeShellPurplePotion = self.shellItem(
+        print(f"Sell {purplePotionNeedToSell} purple potions")
+        codeSellPurplePotion = self.sellItem(
             10, purplePotionNeedToSell, pPotionPrice - 1
         )
-        if codeShellPurplePotion != "SUCCESS":
+        if codeSellPurplePotion != "SUCCESS":
             return
 
         print(f"Buy {potionNeedToBuy} potions")
@@ -1694,7 +1694,7 @@ class MetamonPlayer:
         helloContent = """
         1. Check bag
         2. Shopping
-        3. Shelling
+        3. Selling
         4. Canceling
         5. Buy item in drops
         6. Transaction history
@@ -1710,7 +1710,7 @@ class MetamonPlayer:
         0. Exit
         Please select you want to choose
         """
-        shellingContent = """
+        sellingContent = """
         1. Unit
         2. Bulks
         0. Exit
@@ -1734,12 +1734,12 @@ class MetamonPlayer:
                 if caseNumber == 0:
                     continue
             if caseNumber == 3:
-                caseNumber = int(input(shellingContent))
+                caseNumber = int(input(sellingContent))
                 if caseNumber == 1:
-                    self.shelling(caseNumber)
+                    self.selling(caseNumber)
                     continue
                 if caseNumber == 2:
-                    self.shelling(caseNumber)
+                    self.selling(caseNumber)
                     continue
                 if caseNumber == 0:
                     continue
