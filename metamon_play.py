@@ -907,7 +907,7 @@ class MetamonPlayer:
             print("No metamons are available")
             return
         caseNumber = int(input(joinSquadContent))
-        if caseNumber == 2:
+        if caseNumber == 3:
             scoreAverage = int(input("Please enter your score average:\n"))
             monsterNum = int(input("Please enter your monster number:\n"))
         while 1 != 0:
