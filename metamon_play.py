@@ -147,6 +147,11 @@ class MetamonPlayer:
         self.rarity = "N"
         self.orderId = -1
         self.orderAmount = ""
+        self.hiPotion = 0
+        self.potion = 0
+        self.potionPurple = 0
+        self.yellowDiamond = 0
+        self.purpleDiamond = 0
 
     def post_data(self, url, payload, isData=True):
         if isData != True:
@@ -370,6 +375,7 @@ class MetamonPlayer:
             print(f"{title}: {upperMsg}")
             if sca != upperSca:
                 print(f"{sca} + {upperNum} --> {upperSca}")
+            return upperSca
 
     def resetMonster(self, metamonId):
         """! Reset exp of the metamon lv 60 when she travel to island
@@ -447,38 +453,39 @@ class MetamonPlayer:
             if self.addAttrNeedAsset(metamon["id"], "1") != "SUCCESS":
                 return
             else:
-                self.addAttr(metamon["id"], "1")
-                return
+                upperSca = self.addAttr(metamon["id"], "1")
+                return upperSca
         if metamon["crg"] != metamon["crgMax"]:
             print("Courage")
             if self.addAttrNeedAsset(metamon["id"], "2") != "SUCCESS":
                 return
             else:
-                self.addAttr(metamon["id"], "2")
-                return
+                upperSca = self.addAttr(metamon["id"], "2")
+                return upperSca
         if metamon["inv"] != metamon["invMax"]:
             print("Stealth")
             if self.addAttrNeedAsset(metamon["id"], "5") != "SUCCESS":
                 return
             else:
-                self.addAttr(metamon["id"], "5")
-                return
+                upperSca = self.addAttr(metamon["id"], "5")
+                return upperSca
         if metamon["inte"] != metamon["inteMax"]:
             print("Wisdom")
             if self.addAttrNeedAsset(metamon["id"], "3") != "SUCCESS":
                 return
             else:
-                self.addAttr(metamon["id"], "3")
-                return
+                upperSca = self.addAttr(metamon["id"], "3")
+                return upperSca
         if metamon["con"] != metamon["conMax"]:
             print("Size")
             if self.addAttrNeedAsset(metamon["id"], "4") != "SUCCESS":
                 return
             else:
-                self.addAttr(metamon["id"], "4")
-                return
+                upperSca = self.addAttr(metamon["id"], "4")
+                return upperSca
 
-    def autoAddAttrAllMetamon(self):
+    def autoAddAttrAllMetamonPotiton(self):
+        self.checkOnlyBag()
         metamonList = []
         metamonsAtIsland = self.getMetamonsAtIsland()
         metamonsAtLostWorld = self.getMetamonsAtLostWorld()
@@ -488,19 +495,50 @@ class MetamonPlayer:
         for metamon in metamonList:
             if int(metamon["sca"]) >= 380:
                 continue
+            if self.potion <= 0:
+                print("Out of potions")
+                return
             time.sleep(5)
             self.autoAddAttrMetamon(metamon)
+            self.potion = self.potion - 1
 
-    def autoAddAttrMetamonAbove380(self):
-        purplePotion = self.checkOnlyBag(10)
+    def autoAddAttrAllMetamonPotitonPurple(self):
+        self.checkOnlyBag()
+        numberAddPurplePotion = int(input("Purple potion want to add: \n"))
         loopCount = 0
-        if purplePotion == 0:
+        metamonList = []
+        metamonsAtIsland = self.getMetamonsAtIsland()
+        metamonsAtLostWorld = self.getMetamonsAtLostWorld()
+        metamonList = metamonList + metamonsAtIsland
+        metamonList = metamonList + metamonsAtLostWorld
+        print("\nAdd attr follow Luck > Courage > Stealth > Wisdom > Size")
+        for metamon in metamonList:
+            if self.potionPurple <= 0:
+                print("Out of potions")
+                return
+            if self.potionPurple >= numberAddPurplePotion:
+                loopCount = numberAddPurplePotion
+            else:
+                loopCount = self.potionPurple
+            for i in range(loopCount):
+                time.sleep(5)
+                self.autoAddAttrMetamon(metamon)
+                self.potionPurple = self.potionPurple - 1
+
+    def manualAddAttrMetamonPurplePotion(self):
+        self.checkOnlyBag()
+        numberAddPurplePotion = int(input("Purple potion want to add: \n"))
+        numberScaMax = int(input("Max scare: \n"))
+        loopCount = 0
+        if self.potionPurple == 0:
             print("Out of purple potions")
             return
         metamonsAtLostWorld = self.getMetamonsAtLostWorld()
         metamonList = {}
         self.showAllMetamons()
-        for metamon in metamonsAtLostWorld:
+        for metamon in self.getMetamonsAtLostWorld():
+            metamonList[int(metamon["tokenId"])] = metamon
+        for metamon in self.getMetamonsAtIsland():
             metamonList[int(metamon["tokenId"])] = metamon
         while 1 != 0:
             number = int(input("Please fill number ID metamon to add:\n"))
@@ -509,12 +547,14 @@ class MetamonPlayer:
                 continue
             else:
                 break
-        if purplePotion >= 5:
-            loopCount = 5
+        if self.potionPurple >= numberAddPurplePotion:
+            loopCount = numberAddPurplePotion
         else:
-            loopCount = purplePotion
+            loopCount = self.potionPurple
         for i in range(loopCount):
-            self.autoAddAttrMetamon(metamonList[number])
+            upperSca = self.autoAddAttrMetamon(metamonList[number])
+            if upperSca >= numberScaMax:
+                return
 
     def addAttrAllMetamon(self):
         """! Add attribute for all metamons"""
@@ -626,43 +666,62 @@ class MetamonPlayer:
             self.battleLose += 1
             return False
 
+    def checkHI(self):
+        if self.hi <= 90:
+            if self.hiPotion == 0:
+                code = self.buyItemInDrops(106, 1)
+                if code == "SUCCESS":
+                    return
+                self.buyQuickly(11, 1, 1, 10000)
+            else:
+                self.hiPotion = self.hiPotion - 1
+            self.addHealthy(self.id)
+            self.hi += 10
+
     def checkAbility(self):
         if self.level == 60 and self.exp >= 395:
-            potion = self.checkOnlyBag(2)
-            if potion == 0:
+            if self.potion == 0:
                 self.buyQuickly(2, 1, 1, 1000)
+            else:
+                self.potion = self.potion - 1
             self.resetMonster(self.id)
             self.exp = 0
-        if self.level == 59 and self.exp == 600:
+        elif self.level == 59 and self.exp == 600:
             if self.rarity == "N":
-                itemNeedToBuy = self.checkOnlyBag(2)
-                if itemNeedToBuy == 0:
+                if self.potion == 0:
                     self.buyQuickly(2, 1, 1, 1000)
-            if self.rarity == "R":
-                itemNeedToBuy = self.checkOnlyBag(3)
-                if itemNeedToBuy == 0:
+                else:
+                    self.potion = self.potion - 1
+            elif self.rarity == "R":
+                if self.yellowDiamond == 0:
                     self.buyQuickly(3, 1, 1, 100000)
-            if self.rarity == "SR" or self.rarity == "SSR":
-                itemNeedToBuy = self.checkOnlyBag(4)
-                if itemNeedToBuy == 0:
+                else:
+                    self.yellowDiamond = self.yellowDiamond - 1
+            elif self.rarity == "SR" or self.rarity == "SSR":
+                if self.purpleDiamond == 0:
                     self.buyQuickly(4, 1, 1, 1000000)
+                else:
+                    self.purpleDiamond = self.purpleDiamond - 1
             self.updateMonster(self.id)
             self.level = 60
             self.exp = 0
             self.status = False
-        if self.level != 59 and self.exp >= self.expMax:
+        elif self.level != 59 and self.exp >= self.expMax:
             if self.rarity == "N":
-                itemNeedToBuy = self.checkOnlyBag(2)
-                if itemNeedToBuy == 0:
+                if self.potion == 0:
                     self.buyQuickly(2, 1, 1, 1000)
-            if self.rarity == "R":
-                itemNeedToBuy = self.checkOnlyBag(3)
-                if itemNeedToBuy == 0:
+                else:
+                    self.potion = self.potion - 1
+            elif self.rarity == "R":
+                if self.yellowDiamond == 0:
                     self.buyQuickly(3, 1, 1, 100000)
-            if self.rarity == "SR" or self.rarity == "SSR":
-                itemNeedToBuy = self.checkOnlyBag(4)
-                if itemNeedToBuy == 0:
+                else:
+                    self.yellowDiamond = self.yellowDiamond - 1
+            elif self.rarity == "SR" or self.rarity == "SSR":
+                if self.purpleDiamond == 0:
                     self.buyQuickly(4, 1, 1, 1000000)
+                else:
+                    self.purpleDiamond = self.purpleDiamond - 1
             self.updateMonster(self.id)
             self.exp = 0
             self.level += 1
@@ -677,6 +736,7 @@ class MetamonPlayer:
             self.hi += 10
 
     def battleIsland(self, mode):
+        self.checkOnlyBag()
         metamonAtIslandList = self.getMetamonsAtIsland()
         for metamon in metamonAtIslandList:
             tear = int(metamon["tear"])
@@ -694,6 +754,7 @@ class MetamonPlayer:
                 f"Start {tokenId} with level:{self.level}, exp:{self.exp}, HI:{self.hi} and {tear} turns"
             )
             # Check ability of metamon before start battle
+            self.checkHI()
             self.checkAbility()
             # Get the mininum score scare object battle
             if mode == 1:
@@ -986,17 +1047,23 @@ class MetamonPlayer:
             )
         print(table)
 
-    def checkOnlyBag(self, itemBeChecked):
-        amountItemBeChecked = 0
+    def checkOnlyBag(self):
         urlCheckBag = f"{BASE_URL}/checkBag"
         responseCheckBag = self.post_data(urlCheckBag, self.payload_address)
         if responseCheckBag["code"] != "SUCCESS":
             print("checkBag: " + responseCheckBag["message"])
         itemsInCheckBag = responseCheckBag["data"]["item"]
         for item in itemsInCheckBag:
-            if item["bpType"] == itemBeChecked:
-                amountItemBeChecked = int(item["bpNum"])
-        return amountItemBeChecked
+            if item["bpType"] == 11:
+                self.hiPotion = int(item["bpNum"])
+            elif item["bpType"] == 10:
+                self.potionPurple = int(item["bpNum"])
+            elif item["bpType"] == 2:
+                self.potion = int(item["bpNum"])
+            elif item["bpType"] == 3:
+                self.yellowDiamond = int(item["bpNum"])
+            elif item["bpType"] == 4:
+                self.purpleDiamond = int(item["bpNum"])
 
     def checkBag(self):
         itemsInGame = {}
@@ -1632,9 +1699,10 @@ class MetamonPlayer:
         Please select you want to choose
         """
         addAttrContent = """
-        1. Manual - All metamons
-        2. Automatic - All metamons
-        3. Automatic - Specific metamon above 380
+        1. Manual - All metamons for one attr
+        2. Automatic - All metamons potions
+        3. Manual - Specific metamon
+        4. Automatic - All metamons purple potions
         0. Exit
         Please select you want to choose
         """
@@ -1674,10 +1742,13 @@ class MetamonPlayer:
                     self.addAttrAllMetamon()
                     continue
                 if caseNumber == 2:
-                    self.autoAddAttrAllMetamon()
+                    self.autoAddAttrAllMetamonPotiton()
                     continue
                 if caseNumber == 3:
-                    self.autoAddAttrMetamonAbove380()
+                    self.manualAddAttrMetamonPurplePotion()
+                    continue
+                if caseNumber == 4:
+                    self.autoAddAttrAllMetamonPotitonPurple()
                     continue
                 if caseNumber == 0:
                     continue
