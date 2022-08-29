@@ -533,7 +533,6 @@ class MetamonPlayer:
         if self.potionPurple == 0:
             print("Out of purple potions")
             return
-        metamonsAtLostWorld = self.getMetamonsAtLostWorld()
         metamonList = {}
         self.showAllMetamons()
         for metamon in self.getMetamonsAtLostWorld():
@@ -553,6 +552,8 @@ class MetamonPlayer:
             loopCount = self.potionPurple
         for i in range(loopCount):
             upperSca = self.autoAddAttrMetamon(metamonList[number])
+            if upperSca is None:
+                return
             if upperSca >= numberScaMax:
                 return
 
@@ -666,13 +667,23 @@ class MetamonPlayer:
             self.battleLose += 1
             return False
 
+    def buyOneItemLowest(self, type):
+        for _ in range(10):
+            data = self.getShopOrderList(type, 3)
+            id = data[0]["id"]
+            code = self.buyItem(id)
+            if code == "SUCCESS":
+                return
+            else:
+                continue
+
     def checkHI(self):
         if self.hi <= 90:
             if self.hiPotion == 0:
                 code = self.buyItemInDrops(106, 1)
                 if code == "SUCCESS":
                     return
-                self.buyQuickly(11, 1, 1, 10000)
+                self.buyOneItemLowest(11)
             else:
                 self.hiPotion = self.hiPotion - 1
             self.addHealthy(self.id)
@@ -681,7 +692,7 @@ class MetamonPlayer:
     def checkAbility(self):
         if self.level == 60 and self.exp >= 395:
             if self.potion == 0:
-                self.buyQuickly(2, 1, 1, 1000)
+                self.buyOneItemLowest(2)
             else:
                 self.potion = self.potion - 1
             self.resetMonster(self.id)
@@ -689,17 +700,17 @@ class MetamonPlayer:
         elif self.level == 59 and self.exp == 600:
             if self.rarity == "N":
                 if self.potion == 0:
-                    self.buyQuickly(2, 1, 1, 1000)
+                    self.buyOneItemLowest(2)
                 else:
                     self.potion = self.potion - 1
             elif self.rarity == "R":
                 if self.yellowDiamond == 0:
-                    self.buyQuickly(3, 1, 1, 100000)
+                    self.buyOneItemLowest(3)
                 else:
                     self.yellowDiamond = self.yellowDiamond - 1
             elif self.rarity == "SR" or self.rarity == "SSR":
                 if self.purpleDiamond == 0:
-                    self.buyQuickly(4, 1, 1, 1000000)
+                    self.buyOneItemLowest(4)
                 else:
                     self.purpleDiamond = self.purpleDiamond - 1
             self.updateMonster(self.id)
@@ -709,31 +720,22 @@ class MetamonPlayer:
         elif self.level != 59 and self.exp >= self.expMax:
             if self.rarity == "N":
                 if self.potion == 0:
-                    self.buyQuickly(2, 1, 1, 1000)
+                    self.buyOneItemLowest(2)
                 else:
                     self.potion = self.potion - 1
             elif self.rarity == "R":
                 if self.yellowDiamond == 0:
-                    self.buyQuickly(3, 1, 1, 100000)
+                    self.buyOneItemLowest(3)
                 else:
                     self.yellowDiamond = self.yellowDiamond - 1
             elif self.rarity == "SR" or self.rarity == "SSR":
                 if self.purpleDiamond == 0:
-                    self.buyQuickly(4, 1, 1, 1000000)
+                    self.buyOneItemLowest(4)
                 else:
                     self.purpleDiamond = self.purpleDiamond - 1
             self.updateMonster(self.id)
             self.exp = 0
             self.level += 1
-        if self.hi <= 90 and self.addFatigueNeedAsset(self.id) == "SUCCESS":
-            hiPotion = self.checkOnlyBag(11)
-            if hiPotion == 0:
-                code = self.buyItemInDrops(106, 1)
-                if code == "SUCCESS":
-                    return
-                self.buyQuickly(11, 1, 1, 10000)
-            self.addHealthy(self.id)
-            self.hi += 10
 
     def battleIsland(self, mode):
         self.checkOnlyBag()
@@ -1162,6 +1164,7 @@ class MetamonPlayer:
             print("buy: " + response["message"])
         else:
             print("Buy items successfully")
+        return response["code"]
 
     def tranAvgPrice(self, typeItem):
         payload = {"address": self.address, "type": typeItem}
