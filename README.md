@@ -1,4 +1,4 @@
-# Tools for Metamon World - Radio Caca
+# [Deprecated]Tools for Metamon World - Radio Caca
 
 ==================
 
